@@ -1,9 +1,44 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { AlertTriangle } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: sessions } = await supabase
+        .from("voting_sessions")
+        .select("status")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (sessions && sessions.length > 0) {
+        setSessionStatus(sessions[0].status);
+      } else {
+        setSessionStatus(null);
+      }
+      setLoading(false);
+    };
+    checkSession();
+
+    const channel = supabase
+      .channel("index-session")
+      .on("postgres_changes", { event: "*", schema: "public", table: "voting_sessions" }, () => {
+        checkSession();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const isClosed = sessionStatus === "closed";
+  const isOpen = sessionStatus === "open";
 
   return (
     <div className="kiosk-fullscreen flex flex-col items-center justify-center bg-background relative overflow-hidden">
@@ -37,18 +72,44 @@ const Index = () => {
           </p>
         </div>
 
-        <motion.button
-          onClick={() => navigate("/vote")}
-          className="mt-8 px-16 py-6 text-xl md:text-2xl font-semibold rounded-2xl gradient-primary text-primary-foreground shadow-elevated hover:scale-105 active:scale-95 transition-transform duration-200 animate-pulse-glow"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Iniciar Votación
-        </motion.button>
+        {!loading && isClosed && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-8 shadow-elevated max-w-lg space-y-4"
+          >
+            <div className="flex items-center justify-center gap-3 text-destructive">
+              <AlertTriangle className="w-8 h-8" />
+              <h2 className="text-2xl font-display font-bold">Votación Finalizada</h2>
+            </div>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              El proceso de votación para las Elecciones 2026 de la Cooperativa Comarapa R.L. ha concluido.
+            </p>
+            <p className="text-muted-foreground text-base">
+              Agradecemos su participación. Los resultados serán publicados oportunamente.
+            </p>
+          </motion.div>
+        )}
 
-        <p className="text-muted-foreground text-sm mt-4">
-          Toque el botón para comenzar
-        </p>
+        {!loading && !isClosed && (
+          <>
+            <motion.button
+              onClick={() => {
+                if (isOpen) navigate("/vote");
+              }}
+              disabled={!isOpen}
+              className="mt-8 px-16 py-6 text-xl md:text-2xl font-semibold rounded-2xl gradient-primary text-primary-foreground shadow-elevated hover:scale-105 active:scale-95 transition-transform duration-200 animate-pulse-glow disabled:opacity-50 disabled:hover:scale-100"
+              whileHover={isOpen ? { scale: 1.05 } : {}}
+              whileTap={isOpen ? { scale: 0.95 } : {}}
+            >
+              Iniciar Votación
+            </motion.button>
+
+            <p className="text-muted-foreground text-sm mt-4">
+              {isOpen ? "Toque el botón para comenzar" : "La votación aún no ha sido habilitada"}
+            </p>
+          </>
+        )}
       </motion.div>
 
       {/* Admin access - subtle link */}
