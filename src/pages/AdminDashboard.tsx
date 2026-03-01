@@ -20,6 +20,7 @@ import {
   Trophy,
   Medal,
   Award,
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,12 +34,23 @@ import {
   PieChart as RPieChart,
   Pie,
   Cell,
+  Legend,
 } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import logo from "@/assets/logo.png";
 import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Tab = "dashboard" | "candidates" | "control" | "reports";
 
@@ -87,6 +99,11 @@ const AdminDashboard = () => {
   const [formName, setFormName] = useState("");
   const [formArea, setFormArea] = useState(AREAS[0]);
   const [formPhoto, setFormPhoto] = useState<File | null>(null);
+
+  // Confirmation dialogs
+  const [showOpenVotingConfirm, setShowOpenVotingConfirm] = useState(false);
+  const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
+  const [isClearingData, setIsClearingData] = useState(false);
 
   useEffect(() => {
     const auth = sessionStorage.getItem("adminAuth");
@@ -142,6 +159,10 @@ const AdminDashboard = () => {
         .select("*")
         .eq("session_id", sessions[0].id);
       if (voteData) setVotes(voteData);
+    } else {
+      setSession(null);
+      setCandidates([]);
+      setVotes([]);
     }
   };
 
@@ -177,6 +198,43 @@ const AdminDashboard = () => {
       });
     }
     fetchData();
+  };
+
+  const handleOpenVotingClick = () => {
+    setShowOpenVotingConfirm(true);
+  };
+
+  const handleConfirmOpenVoting = () => {
+    setShowOpenVotingConfirm(false);
+    createOrUpdateSession("open");
+  };
+
+  const handleClearDataClick = () => {
+    if (session?.status === "open") return; // Can't clear if voting is open
+    setShowClearDataConfirm(true);
+  };
+
+  const handleConfirmClearData = async () => {
+    setShowClearDataConfirm(false);
+    if (!session) return;
+    setIsClearingData(true);
+    try {
+      // Delete votes first (FK dependency)
+      await supabase.from("votes").delete().eq("session_id", session.id);
+      // Delete candidates
+      await supabase.from("candidates").delete().eq("session_id", session.id);
+      // Delete session
+      await supabase.from("voting_sessions").delete().eq("id", session.id);
+      // Reset state
+      setSession(null);
+      setCandidates([]);
+      setVotes([]);
+      setTotalVoters(100);
+    } catch (err) {
+      console.error("Error clearing data:", err);
+    } finally {
+      setIsClearingData(false);
+    }
   };
 
   // Candidate CRUD
@@ -299,7 +357,7 @@ const AdminDashboard = () => {
     doc.setFontSize(18);
     doc.text("Cooperativa Comarapa R.L.", logoBase64 ? 40 : 14, 20);
     doc.setFontSize(14);
-    doc.text("Elecciones 2026 - Resultados", logoBase64 ? 40 : 14, 28);
+    doc.text("Elecciones 2026 - Resultados Oficiales", logoBase64 ? 40 : 14, 28);
     doc.setFontSize(10);
     doc.text(`Fecha: ${new Date().toLocaleString()}`, 14, 40);
     doc.text(`Total Habilitados: ${totalVoters}`, 14, 46);
@@ -316,19 +374,49 @@ const AdminDashboard = () => {
 
     AREAS.forEach((area) => {
       const results = getAreaResults(area);
-      doc.setFontSize(12);
-      doc.text(area, 14, startY);
-      startY += 5;
 
-      const rows = results.candidates.map((c, i) => [`${i + 1}°`, c.name, c.votes.toString(), `${c.percentage}%`]);
-      rows.push(["", "Votos en Blanco", results.blank.toString(), `${results.blankPercentage}%`]);
+      // Check if we need a new page
+      if (startY > 240) {
+        doc.addPage();
+        startY = 20;
+      }
+
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text(area, 14, startY);
+      startY += 3;
+
+      // Show winner
+      if (results.candidates.length > 0 && results.candidates[0].votes > 0) {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.text(`🏆 Ganador: ${results.candidates[0].name} (${results.candidates[0].votes} votos - ${results.candidates[0].percentage}%)`, 14, startY + 5);
+        startY += 8;
+      }
+
+      doc.setFont("helvetica", "normal");
+      startY += 2;
+
+      const rows = results.candidates.map((c, i) => {
+        const posLabel = i === 0 ? `${i + 1}° 🏆` : `${i + 1}°`;
+        return [posLabel, c.name, c.votes.toString(), `${c.percentage}%`];
+      });
+      rows.push(["—", "Votos en Blanco", results.blank.toString(), `${results.blankPercentage}%`]);
 
       autoTable(doc, {
         startY,
-        head: [["Pos.", "Candidato", "Votos", "Porcentaje"]],
+        head: [["Posición", "Candidato", "Votos", "Porcentaje"]],
         body: rows,
         theme: "grid",
         headStyles: { fillColor: [232, 116, 10] },
+        bodyStyles: { fontSize: 9 },
+        didParseCell: (data) => {
+          // Highlight winner row
+          if (data.section === "body" && data.row.index === 0) {
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.fillColor = [255, 243, 224];
+          }
+        },
       });
 
       startY = (doc as any).lastAutoTable.finalY + 15;
@@ -343,7 +431,7 @@ const AdminDashboard = () => {
     // Summary sheet
     const summaryData = [
       ["Cooperativa Comarapa R.L."],
-      ["Elecciones 2026 - Resultados"],
+      ["Elecciones 2026 - Resultados Oficiales"],
       [""],
       ["Fecha", new Date().toLocaleString()],
       ["Total Habilitados", totalVoters],
@@ -352,22 +440,34 @@ const AdminDashboard = () => {
     ];
     if (session?.started_at) summaryData.push(["Inicio", new Date(session.started_at).toLocaleString()]);
     if (session?.ended_at) summaryData.push(["Fin", new Date(session.ended_at).toLocaleString()]);
+
+    // Add winners summary
+    summaryData.push([""], ["=== GANADORES POR ÁREA ==="]);
+    AREAS.forEach((area) => {
+      const results = getAreaResults(area);
+      if (results.candidates.length > 0 && results.candidates[0].votes > 0) {
+        summaryData.push([`${area}`, `${results.candidates[0].name} (${results.candidates[0].votes} votos - ${results.candidates[0].percentage}%)`]);
+      } else {
+        summaryData.push([`${area}`, "Sin votos"]);
+      }
+    });
+
     const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(wb, summaryWs, "Resumen");
 
     AREAS.forEach((area) => {
       const results = getAreaResults(area);
       const data = results.candidates.map((c, i) => ({
-        Posición: `${i + 1}°`,
-        Candidato: c.name,
-        Votos: c.votes,
-        Porcentaje: `${c.percentage}%`,
+        "Posición": `${i + 1}°${i === 0 ? " 🏆 GANADOR" : ""}`,
+        "Candidato": c.name,
+        "Votos": c.votes,
+        "Porcentaje": `${c.percentage}%`,
       }));
       data.push({
-        Posición: "",
-        Candidato: "Votos en Blanco",
-        Votos: results.blank,
-        Porcentaje: `${results.blankPercentage}%`,
+        "Posición": "—",
+        "Candidato": "Votos en Blanco",
+        "Votos": results.blank,
+        "Porcentaje": `${results.blankPercentage}%`,
       });
 
       const ws = XLSX.utils.json_to_sheet(data);
@@ -375,6 +475,25 @@ const AdminDashboard = () => {
     });
 
     XLSX.writeFile(wb, "resultados-elecciones-2026.xlsx");
+  };
+
+  // Custom pie label renderer
+  const renderPieLabel = ({ name, percent, x, y, midAngle }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = 120;
+    const cx2 = x + (midAngle > 90 && midAngle < 270 ? -10 : 10);
+    return (
+      <text
+        x={cx2}
+        y={y}
+        fill="hsl(var(--foreground))"
+        textAnchor={midAngle > 90 && midAngle < 270 ? "end" : "start"}
+        dominantBaseline="central"
+        fontSize={11}
+      >
+        {`${name} ${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
   };
 
   const tabs = [
@@ -469,7 +588,6 @@ const AdminDashboard = () => {
 
                 {/* Voting info: time + progress */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Voting start & timer */}
                   <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <Clock className="w-5 h-5 text-primary" />
@@ -505,7 +623,6 @@ const AdminDashboard = () => {
                     )}
                   </div>
 
-                  {/* Progress */}
                   <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <TrendingUp className="w-5 h-5 text-primary" />
@@ -576,7 +693,6 @@ const AdminDashboard = () => {
                                   </div>
                                 );
                               })}
-                              {/* Blank votes */}
                               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 border-t border-border">
                                 <span className="text-xs text-muted-foreground ml-8">
                                   Votos en blanco: {results.blank} ({results.blankPercentage}%)
@@ -755,7 +871,7 @@ const AdminDashboard = () => {
                   <div className="flex gap-3">
                     {(!session || session.status === "closed") && (
                       <button
-                        onClick={() => createOrUpdateSession("open")}
+                        onClick={handleOpenVotingClick}
                         className="flex items-center gap-2 px-6 py-3 rounded-lg bg-success text-success-foreground font-semibold hover:opacity-90 transition-opacity"
                       >
                         <Play className="w-5 h-5" />
@@ -805,8 +921,24 @@ const AdminDashboard = () => {
                     <button onClick={exportExcel} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted font-medium">
                       <Download className="w-4 h-4" /> Excel
                     </button>
+                    <button
+                      onClick={handleClearDataClick}
+                      disabled={session?.status === "open" || isClearingData}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-destructive-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={session?.status === "open" ? "Debe cerrar la votación antes de limpiar datos" : "Limpiar todos los datos del sistema"}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {isClearingData ? "Limpiando..." : "Limpiar Datos"}
+                    </button>
                   </div>
                 </div>
+
+                {session?.status === "open" && (
+                  <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
+                    <p className="text-sm">La votación está abierta. Debe cerrar la votación antes de poder limpiar los datos del sistema.</p>
+                  </div>
+                )}
 
                 {/* Summary */}
                 <div className="bg-card rounded-xl border border-border p-6 shadow-card">
@@ -842,15 +974,25 @@ const AdminDashboard = () => {
 
                   return (
                     <div key={area} className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
-                      <h3 className="font-display font-bold text-xl text-card-foreground">{area}</h3>
-                      <p className="text-sm text-muted-foreground">Total votos: {results.total}</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-display font-bold text-xl text-card-foreground">{area}</h3>
+                          <p className="text-sm text-muted-foreground">Total votos: {results.total}</p>
+                        </div>
+                        {results.candidates.length > 0 && results.candidates[0].votes > 0 && (
+                          <div className="flex items-center gap-2 bg-accent/50 border border-primary/20 px-4 py-2 rounded-lg">
+                            <Trophy className="w-5 h-5 text-yellow-500" />
+                            <span className="font-bold text-card-foreground">{results.candidates[0].name}</span>
+                          </div>
+                        )}
+                      </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
                           <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={barData}>
                               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                              <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={60} />
                               <YAxis />
                               <Tooltip />
                               <Bar dataKey="votos" radius={[6, 6, 0, 0]}>
@@ -862,16 +1004,29 @@ const AdminDashboard = () => {
                           </ResponsiveContainer>
                         </div>
                         <div>
-                          <ResponsiveContainer width="100%" height={250}>
+                          <ResponsiveContainer width="100%" height={300}>
                             <RPieChart>
-                              <Pie data={pieData} cx="50%" cy="50%" outerRadius={90} dataKey="value"
-                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              <Pie
+                                data={pieData}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                innerRadius={30}
+                                dataKey="value"
+                                label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                                labelLine={true}
                               >
                                 {pieData.map((_, i) => (
                                   <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                                 ))}
                               </Pie>
                               <Tooltip />
+                              <Legend
+                                layout="vertical"
+                                align="right"
+                                verticalAlign="middle"
+                                wrapperStyle={{ fontSize: "12px" }}
+                              />
                             </RPieChart>
                           </ResponsiveContainer>
                         </div>
@@ -889,9 +1044,11 @@ const AdminDashboard = () => {
                           </thead>
                           <tbody>
                             {results.candidates.map((c, i) => (
-                              <tr key={c.name} className="border-b border-border/50">
-                                <td className="py-2 px-3 font-bold text-foreground">{i + 1}°</td>
-                                <td className="py-2 px-3 text-foreground">{c.name}</td>
+                              <tr key={c.name} className={`border-b border-border/50 ${i === 0 ? "bg-accent/30" : ""}`}>
+                                <td className="py-2 px-3 font-bold text-foreground">
+                                  {i + 1}° {i === 0 && "🏆"}
+                                </td>
+                                <td className="py-2 px-3 text-foreground font-medium">{c.name}</td>
                                 <td className="py-2 px-3 text-right font-semibold text-foreground">{c.votes}</td>
                                 <td className="py-2 px-3 text-right text-muted-foreground">{c.percentage}%</td>
                               </tr>
@@ -913,6 +1070,61 @@ const AdminDashboard = () => {
           </AnimatePresence>
         </div>
       </main>
+
+      {/* Confirmation: Open Voting */}
+      <AlertDialog open={showOpenVotingConfirm} onOpenChange={setShowOpenVotingConfirm}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl">
+              Confirmar Apertura de Votación
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Está seguro que desea {session ? "reabrir" : "crear e iniciar"} la votación?
+              {session && " Los votantes podrán emitir sus votos nuevamente."}
+              {!session && ` Se creará una nueva sesión con ${totalVoters} votantes habilitados.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmOpenVoting}
+              className="bg-success text-success-foreground hover:bg-success/90"
+            >
+              Sí, Abrir Votación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation: Clear Data */}
+      <AlertDialog open={showClearDataConfirm} onOpenChange={setShowClearDataConfirm}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-destructive" />
+              Limpiar Todos los Datos
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              <span className="font-bold text-destructive">¡ATENCIÓN!</span> Esta acción eliminará permanentemente:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Todos los votos registrados</li>
+                <li>Todos los candidatos</li>
+                <li>La sesión de votación actual</li>
+              </ul>
+              <p className="mt-3 font-semibold">Esta acción NO se puede deshacer.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmClearData}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sí, Eliminar Todo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
