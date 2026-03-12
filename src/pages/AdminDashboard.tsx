@@ -398,7 +398,7 @@ const AdminDashboard = () => {
       startY += 2;
 
       const rows = results.candidates.map((c, i) => {
-        const posLabel = i === 0 ? `${i + 1}° 🏆` : `${i + 1}°`;
+        const posLabel = i === 0 ? `${i + 1}° GANADOR` : `${i + 1}°`;
         return [posLabel, c.name, c.votes.toString(), `${c.percentage}%`];
       });
       rows.push(["—", "Votos en Blanco", results.blank.toString(), `${results.blankPercentage}%`]);
