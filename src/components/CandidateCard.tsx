@@ -55,7 +55,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       </div>
 
       {/* Name */}
-      <h3 className={`font-bold text-xl ${
+      <h3 className={`font-bold text-2xl ${
         isSelected ? "text-accent-foreground" : "text-card-foreground"
       }`}>
         {candidate.full_name}
