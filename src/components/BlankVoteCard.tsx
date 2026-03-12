@@ -10,10 +10,10 @@ const BlankVoteCard = ({ isSelected, onSelect }: BlankVoteCardProps) => {
   return (
     <motion.button
       onClick={onSelect}
-      className={`relative w-full p-8 rounded-2xl border-3 transition-all duration-200 flex flex-col items-center gap-4 text-center ${
+      className={`relative w-full p-10 rounded-2xl border-3 transition-all duration-200 flex flex-col items-center gap-5 text-center ${
         isSelected
-          ? "border-destructive bg-destructive/10 shadow-elevated"
-          : "border-dashed border-border bg-card shadow-card hover:shadow-soft hover:border-muted-foreground"
+          ? "border-muted-foreground bg-muted shadow-elevated"
+          : "border-dashed border-border bg-muted/50 shadow-card hover:shadow-soft hover:border-muted-foreground"
       }`}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
