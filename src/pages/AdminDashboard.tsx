@@ -458,7 +458,7 @@ const AdminDashboard = () => {
     AREAS.forEach((area) => {
       const results = getAreaResults(area);
       const data = results.candidates.map((c, i) => ({
-        "Posición": `${i + 1}°${i === 0 ? " 🏆 GANADOR" : ""}`,
+        "Posición": `${i + 1}°${i === 0 ? " GANADOR" : ""}`,
         "Candidato": c.name,
         "Votos": c.votes,
         "Porcentaje": `${c.percentage}%`,
