@@ -390,7 +390,7 @@ const AdminDashboard = () => {
       if (results.candidates.length > 0 && results.candidates[0].votes > 0) {
         doc.setFontSize(10);
         doc.setFont("helvetica", "italic");
-        doc.text(`🏆 Ganador: ${results.candidates[0].name} (${results.candidates[0].votes} votos - ${results.candidates[0].percentage}%)`, 14, startY + 5);
+        doc.text(`Ganador: ${results.candidates[0].name} (${results.candidates[0].votes} votos - ${results.candidates[0].percentage}%)`, 14, startY + 5);
         startY += 8;
       }
 
