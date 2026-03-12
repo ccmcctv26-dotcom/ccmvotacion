@@ -23,7 +23,7 @@ const BlankVoteCard = ({ isSelected, onSelect }: BlankVoteCardProps) => {
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-destructive flex items-center justify-center"
+          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-muted-foreground flex items-center justify-center"
         >
           <Check className="w-6 h-6 text-destructive-foreground" />
         </motion.div>
