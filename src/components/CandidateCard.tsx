@@ -18,7 +18,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
   return (
     <motion.button
       onClick={onSelect}
-      className={`relative w-full p-8 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center gap-4 text-center ${
+      className={`relative w-full p-10 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center gap-5 text-center ${
         isSelected
           ? "border-primary bg-accent shadow-elevated"
           : "border-border bg-card shadow-card hover:shadow-soft hover:border-primary/30"
@@ -38,7 +38,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       )}
 
       {/* Photo */}
-      <div className={`w-28 h-28 rounded-full overflow-hidden border-4 transition-colors ${
+      <div className={`w-36 h-36 rounded-full overflow-hidden border-4 transition-colors ${
         isSelected ? "border-primary" : "border-border"
       }`}>
         {candidate.photo_url ? (
@@ -55,7 +55,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       </div>
 
       {/* Name */}
-      <h3 className={`font-bold text-xl ${
+      <h3 className={`font-bold text-2xl ${
         isSelected ? "text-accent-foreground" : "text-card-foreground"
       }`}>
         {candidate.full_name}

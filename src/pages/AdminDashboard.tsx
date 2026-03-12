@@ -993,7 +993,7 @@ const AdminDashboard = () => {
                             <BarChart data={barData}>
                               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                               <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={60} />
-                              <YAxis />
+                              <YAxis allowDecimals={false} />
                               <Tooltip />
                               <Bar dataKey="votos" radius={[6, 6, 0, 0]}>
                                 {barData.map((_, i) => (

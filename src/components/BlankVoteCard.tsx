@@ -10,10 +10,10 @@ const BlankVoteCard = ({ isSelected, onSelect }: BlankVoteCardProps) => {
   return (
     <motion.button
       onClick={onSelect}
-      className={`relative w-full p-8 rounded-2xl border-3 transition-all duration-200 flex flex-col items-center gap-4 text-center ${
+      className={`relative w-full p-10 rounded-2xl border-3 transition-all duration-200 flex flex-col items-center gap-5 text-center ${
         isSelected
-          ? "border-destructive bg-destructive/10 shadow-elevated"
-          : "border-dashed border-border bg-card shadow-card hover:shadow-soft hover:border-muted-foreground"
+          ? "border-muted-foreground bg-muted shadow-elevated"
+          : "border-dashed border-border bg-muted/50 shadow-card hover:shadow-soft hover:border-muted-foreground"
       }`}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
@@ -23,26 +23,26 @@ const BlankVoteCard = ({ isSelected, onSelect }: BlankVoteCardProps) => {
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-destructive flex items-center justify-center"
+          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-muted-foreground flex items-center justify-center"
         >
           <Check className="w-6 h-6 text-destructive-foreground" />
         </motion.div>
       )}
 
       {/* Icon */}
-      <div className={`w-28 h-28 rounded-full flex items-center justify-center border-4 transition-colors ${
-        isSelected ? "border-destructive bg-destructive/20" : "border-border bg-muted"
+      <div className={`w-36 h-36 rounded-full flex items-center justify-center border-4 transition-colors ${
+        isSelected ? "border-muted-foreground bg-muted" : "border-border bg-muted"
       }`}>
-        <Ban className={`w-14 h-14 ${isSelected ? "text-destructive" : "text-muted-foreground"}`} />
+        <Ban className={`w-16 h-16 ${isSelected ? "text-muted-foreground" : "text-muted-foreground/60"}`} />
       </div>
 
       {/* Label */}
-      <h3 className={`font-bold text-xl ${
-        isSelected ? "text-destructive" : "text-card-foreground"
+      <h3 className={`font-bold text-2xl ${
+        isSelected ? "text-foreground" : "text-muted-foreground"
       }`}>
         VOTO EN BLANCO
       </h3>
-      <p className={`text-base ${isSelected ? "text-destructive/80" : "text-muted-foreground"}`}>
+      <p className={`text-lg ${isSelected ? "text-muted-foreground" : "text-muted-foreground/70"}`}>
         No votar por ningún candidato
       </p>
     </motion.button>
