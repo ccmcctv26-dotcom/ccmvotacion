@@ -38,7 +38,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       )}
 
       {/* Photo */}
-      <div className={`w-28 h-28 rounded-full overflow-hidden border-4 transition-colors ${
+      <div className={`w-36 h-36 rounded-full overflow-hidden border-4 transition-colors ${
         isSelected ? "border-primary" : "border-border"
       }`}>
         {candidate.photo_url ? (
