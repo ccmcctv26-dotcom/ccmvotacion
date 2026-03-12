@@ -30,19 +30,19 @@ const BlankVoteCard = ({ isSelected, onSelect }: BlankVoteCardProps) => {
       )}
 
       {/* Icon */}
-      <div className={`w-28 h-28 rounded-full flex items-center justify-center border-4 transition-colors ${
-        isSelected ? "border-destructive bg-destructive/20" : "border-border bg-muted"
+      <div className={`w-36 h-36 rounded-full flex items-center justify-center border-4 transition-colors ${
+        isSelected ? "border-muted-foreground bg-muted" : "border-border bg-muted"
       }`}>
-        <Ban className={`w-14 h-14 ${isSelected ? "text-destructive" : "text-muted-foreground"}`} />
+        <Ban className={`w-16 h-16 ${isSelected ? "text-muted-foreground" : "text-muted-foreground/60"}`} />
       </div>
 
       {/* Label */}
-      <h3 className={`font-bold text-xl ${
-        isSelected ? "text-destructive" : "text-card-foreground"
+      <h3 className={`font-bold text-2xl ${
+        isSelected ? "text-foreground" : "text-muted-foreground"
       }`}>
         VOTO EN BLANCO
       </h3>
-      <p className={`text-base ${isSelected ? "text-destructive/80" : "text-muted-foreground"}`}>
+      <p className={`text-lg ${isSelected ? "text-muted-foreground" : "text-muted-foreground/70"}`}>
         No votar por ningún candidato
       </p>
     </motion.button>

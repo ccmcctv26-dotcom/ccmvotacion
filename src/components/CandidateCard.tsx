@@ -18,7 +18,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
   return (
     <motion.button
       onClick={onSelect}
-      className={`relative w-full p-8 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center gap-4 text-center ${
+      className={`relative w-full p-10 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center gap-5 text-center ${
         isSelected
           ? "border-primary bg-accent shadow-elevated"
           : "border-border bg-card shadow-card hover:shadow-soft hover:border-primary/30"
