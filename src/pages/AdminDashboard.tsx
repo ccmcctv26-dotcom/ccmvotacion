@@ -390,7 +390,7 @@ const AdminDashboard = () => {
       if (results.candidates.length > 0 && results.candidates[0].votes > 0) {
         doc.setFontSize(10);
         doc.setFont("helvetica", "italic");
-        doc.text(`🏆 Ganador: ${results.candidates[0].name} (${results.candidates[0].votes} votos - ${results.candidates[0].percentage}%)`, 14, startY + 5);
+        doc.text(`Ganador: ${results.candidates[0].name} (${results.candidates[0].votes} votos - ${results.candidates[0].percentage}%)`, 14, startY + 5);
         startY += 8;
       }
 
@@ -398,7 +398,7 @@ const AdminDashboard = () => {
       startY += 2;
 
       const rows = results.candidates.map((c, i) => {
-        const posLabel = i === 0 ? `${i + 1}° 🏆` : `${i + 1}°`;
+        const posLabel = i === 0 ? `${i + 1}° GANADOR` : `${i + 1}°`;
         return [posLabel, c.name, c.votes.toString(), `${c.percentage}%`];
       });
       rows.push(["—", "Votos en Blanco", results.blank.toString(), `${results.blankPercentage}%`]);
@@ -458,7 +458,7 @@ const AdminDashboard = () => {
     AREAS.forEach((area) => {
       const results = getAreaResults(area);
       const data = results.candidates.map((c, i) => ({
-        "Posición": `${i + 1}°${i === 0 ? " 🏆 GANADOR" : ""}`,
+        "Posición": `${i + 1}°${i === 0 ? " GANADOR" : ""}`,
         "Candidato": c.name,
         "Votos": c.votes,
         "Porcentaje": `${c.percentage}%`,
