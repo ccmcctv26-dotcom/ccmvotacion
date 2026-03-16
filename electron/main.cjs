@@ -25,7 +25,7 @@ function createWindow() {
     // mainWindow.webContents.openDevTools(); // Commented out to avoid devtools errors
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
-    mainWindow.webContents.openDevTools(); // Commented out to avoid devtools errors
+    // mainWindow.webContents.openDevTools(); Commented out to avoid devtools errors
   }
 
   mainWindow.on('closed', () => {
