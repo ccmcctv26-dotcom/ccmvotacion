@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import CandidateCard from "@/components/CandidateCard";
 import BlankVoteCard from "@/components/BlankVoteCard";
+import { Pause } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-const AREAS = ["Administración", "Vigilancia", "Tribunal de Honor"] as const;
+const AREAS = ["Administración", "Vigilancia", "Tribunal de Honor", "Comité Electoral"] as const;
 
 type Candidate = {
   id: string;
@@ -26,6 +27,7 @@ const VotingProcess = () => {
   const [step, setStep] = useState(0);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionStatus, setSessionStatus] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [isBlankSelected, setIsBlankSelected] = useState(false);
   const [votes, setVotes] = useState<VoteSelection[]>([]);
@@ -38,7 +40,7 @@ const VotingProcess = () => {
       const { data: sessions } = await supabase
         .from("voting_sessions")
         .select("*")
-        .eq("status", "open")
+        .order("created_at", { ascending: false })
         .limit(1);
 
       if (!sessions || sessions.length === 0) {
@@ -46,12 +48,23 @@ const VotingProcess = () => {
         return;
       }
 
-      setSessionId(sessions[0].id);
+      const currentSession = sessions[0];
+      if (currentSession.status !== "open") {
+        setSessionStatus(currentSession.status);
+        if (currentSession.status === "closed") {
+          navigate("/");
+          return;
+        }
+      } else {
+        setSessionStatus("open");
+      }
+
+      setSessionId(currentSession.id);
 
       const { data: candidateData } = await supabase
         .from("candidates")
         .select("*")
-        .eq("session_id", sessions[0].id);
+        .eq("session_id", currentSession.id);
 
       if (candidateData) {
         setCandidates(candidateData);
@@ -59,6 +72,20 @@ const VotingProcess = () => {
     };
 
     fetchData();
+
+    // Listen for session status changes (pause/resume/close)
+    const channel = supabase
+      .channel("voter-session-status")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "voting_sessions" }, (payload) => {
+        const newStatus = (payload.new as any).status;
+        setSessionStatus(newStatus);
+        if (newStatus === "closed") {
+          navigate("/");
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [navigate]);
 
   useEffect(() => {
@@ -69,10 +96,13 @@ const VotingProcess = () => {
     }
   }, [navigate]);
 
+  const isPaused = sessionStatus === "paused";
   const currentArea = AREAS[step];
   const areaCandidates = candidates.filter((c) => c.area === currentArea);
+  const totalSteps = AREAS.length;
 
   const handleSelectCandidate = (candidateId: string) => {
+    if (isPaused) return;
     if (selectedCandidate === candidateId) {
       setSelectedCandidate(null);
     } else {
@@ -82,12 +112,14 @@ const VotingProcess = () => {
   };
 
   const handleSelectBlank = () => {
+    if (isPaused) return;
     setIsBlankSelected(!isBlankSelected);
     setSelectedCandidate(null);
   };
 
   const handleNext = useCallback(() => {
-    if (!selectedCandidate && !isBlankSelected) return; // Must select something
+    if (isPaused) return;
+    if (!selectedCandidate && !isBlankSelected) return;
 
     const newVote: VoteSelection = {
       area: currentArea,
@@ -100,12 +132,12 @@ const VotingProcess = () => {
     setSelectedCandidate(null);
     setIsBlankSelected(false);
 
-    if (step < 2) {
+    if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
       submitVotes(newVotes);
     }
-  }, [selectedCandidate, isBlankSelected, currentArea, votes, step]);
+  }, [selectedCandidate, isBlankSelected, currentArea, votes, step, isPaused]);
 
   const submitVotes = async (allVotes: VoteSelection[]) => {
     if (!sessionId || isSubmitting) return;
@@ -136,7 +168,7 @@ const VotingProcess = () => {
     }
   };
 
-  const stepLabels = ["Administración", "Vigilancia", "Tribunal de Honor"];
+  const stepLabels = AREAS as unknown as string[];
   const hasSelection = selectedCandidate !== null || isBlankSelected;
 
   return (
@@ -154,90 +186,118 @@ const VotingProcess = () => {
         </div>
       </div>
 
-      {/* Step indicator */}
-      <div className="flex items-center justify-center gap-2 py-5 px-6">
-        {stepLabels.map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
-            <div
-              className={`flex items-center gap-2 px-5 py-3 rounded-full text-base font-medium transition-all ${
-                i === step
-                  ? "bg-primary text-primary-foreground shadow-elevated"
-                  : i < step
-                  ? "bg-success text-success-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              <span className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
-                {i < step ? "✓" : i + 1}
-              </span>
-              <span className="hidden sm:inline text-base">{label}</span>
-            </div>
-            {i < 2 && (
-              <div className={`w-8 h-0.5 ${i < step ? "bg-success" : "bg-border"}`} />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Voting area */}
-      <div className="flex-1 flex flex-col items-center px-6 pb-6 overflow-auto">
-        <AnimatePresence mode="wait">
+      {/* Paused overlay */}
+      {isPaused && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
           <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-5xl"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-12 shadow-elevated max-w-lg text-center space-y-6"
           >
-            <h1 style={{fontFamily: "sans-serif"}} className="text-3xl md:text-4xl font-display font-bold text-center text-foreground mb-2">
-              Votar por {currentArea}
-            </h1>
-            <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-lg">
-              Seleccione un candidato o elija Voto en Blanco
+            <div className="w-20 h-20 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
+              <Pause className="w-10 h-10 text-warning" />
+            </div>
+            <h2 className="text-3xl font-display font-bold text-foreground">
+              Votación Pausada Temporalmente
+            </h2>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              El proceso de votación ha sido pausado temporalmente. Por favor espere.
             </p>
-
-            {areaCandidates.length === 0 ? (
-              <div className="text-center py-12">
-                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-xl">
-                  No hay candidatos registrados para esta área
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                {areaCandidates.map((candidate) => (
-                  <CandidateCard
-                    key={candidate.id}
-                    candidate={candidate}
-                    isSelected={selectedCandidate === candidate.id}
-                    onSelect={() => handleSelectCandidate(candidate.id)}
-                  />
-                ))}
-                {/* Blank vote card */}
-                <BlankVoteCard
-                  isSelected={isBlankSelected}
-                  onSelect={handleSelectBlank}
-                />
-              </div>
-            )}
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+              Esperando reanudación...
+            </div>
           </motion.div>
-        </AnimatePresence>
+        </div>
+      )}
 
-        {/* Action button */}
-        <motion.button
-          onClick={handleNext}
-          disabled={isSubmitting || !hasSelection}
-          className="mt-auto px-14 py-5 text-xl font-semibold rounded-xl gradient-primary text-primary-foreground shadow-elevated hover:scale-105 active:scale-95 transition-transform disabled:opacity-40 disabled:hover:scale-100"
-          whileHover={hasSelection ? { scale: 1.03 } : {}}
-          whileTap={hasSelection ? { scale: 0.97 } : {}}
-        >
-          {isSubmitting
-            ? "Enviando..."
-            : step < 2
-            ? "Siguiente →"
-            : "Finalizar Votación ✓"}
-        </motion.button>
-      </div>
+      {!isPaused && (
+        <>
+          {/* Step indicator */}
+          <div className="flex items-center justify-center gap-1 py-4 px-4">
+            {stepLabels.map((label, i) => (
+              <div key={label} className="flex items-center gap-1">
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                    i === step
+                      ? "bg-primary text-primary-foreground shadow-elevated"
+                      : i < step
+                      ? "bg-success text-success-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <span className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-bold">
+                    {i < step ? "✓" : i + 1}
+                  </span>
+                  <span className="hidden md:inline text-sm">{label}</span>
+                </div>
+                {i < totalSteps - 1 && (
+                  <div className={`w-4 h-0.5 ${i < step ? "bg-success" : "bg-border"}`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Voting area */}
+          <div className="flex-1 flex flex-col items-center px-6 pb-6 overflow-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.3 }}
+                className="w-full max-w-5xl"
+              >
+                <h1 className="text-3xl md:text-4xl font-display font-bold text-center text-foreground mb-2">
+                  Votar por {currentArea}
+                </h1>
+                <p className="text-muted-foreground text-center mb-8 text-lg">
+                  Seleccione un candidato o elija Voto en Blanco
+                </p>
+
+                {areaCandidates.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground text-xl">
+                      No hay candidatos registrados para esta área
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                    {areaCandidates.map((candidate) => (
+                      <CandidateCard
+                        key={candidate.id}
+                        candidate={candidate}
+                        isSelected={selectedCandidate === candidate.id}
+                        onSelect={() => handleSelectCandidate(candidate.id)}
+                      />
+                    ))}
+                    <BlankVoteCard
+                      isSelected={isBlankSelected}
+                      onSelect={handleSelectBlank}
+                    />
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Action button */}
+            <motion.button
+              onClick={handleNext}
+              disabled={isSubmitting || !hasSelection}
+              className="mt-auto px-14 py-5 text-xl font-semibold rounded-xl gradient-primary text-primary-foreground shadow-elevated hover:scale-105 active:scale-95 transition-transform disabled:opacity-40 disabled:hover:scale-100"
+              whileHover={hasSelection ? { scale: 1.03 } : {}}
+              whileTap={hasSelection ? { scale: 0.97 } : {}}
+            >
+              {isSubmitting
+                ? "Enviando..."
+                : step < totalSteps - 1
+                ? "Siguiente →"
+                : "Finalizar Votación ✓"}
+            </motion.button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

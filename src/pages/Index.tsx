@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Pause } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const fontFamily = { fontFamily: "sans-serif" };
@@ -41,6 +41,7 @@ const Index = () => {
 
   const isClosed = sessionStatus === "closed";
   const isOpen = sessionStatus === "open";
+  const isPaused = sessionStatus === "paused";
 
   return (
     <div className="kiosk-fullscreen flex flex-col items-center justify-center bg-background relative overflow-hidden">
@@ -93,7 +94,27 @@ const Index = () => {
           </motion.div>
         )}
 
-        {!loading && !isClosed && (
+        {!loading && isPaused && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-8 shadow-elevated max-w-lg space-y-4"
+          >
+            <div className="flex items-center justify-center gap-3 text-warning">
+              <Pause className="w-8 h-8" />
+              <h2 className="text-2xl font-display font-bold text-foreground">Votación Pausada</h2>
+            </div>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              El proceso de votación ha sido pausado temporalmente. Por favor espere.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
+              <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+              Esperando reanudación...
+            </div>
+          </motion.div>
+        )}
+
+        {!loading && !isClosed && !isPaused && (
           <>
             <motion.button
               onClick={() => {
