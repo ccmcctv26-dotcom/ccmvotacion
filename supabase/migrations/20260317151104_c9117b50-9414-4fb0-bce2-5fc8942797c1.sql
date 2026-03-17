@@ -1,0 +1,2 @@
+ALTER TABLE public.votes DROP CONSTRAINT votes_area_check;
+ALTER TABLE public.votes ADD CONSTRAINT votes_area_check CHECK (area IN ('Administración', 'Vigilancia', 'Tribunal de Honor', 'Comité Electoral'));
