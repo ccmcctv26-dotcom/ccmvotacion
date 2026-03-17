@@ -1,0 +1,2 @@
+ALTER TABLE public.candidates DROP CONSTRAINT candidates_area_check;
+ALTER TABLE public.candidates ADD CONSTRAINT candidates_area_check CHECK (area IN ('Administración', 'Vigilancia', 'Tribunal de Honor', 'Comité Electoral'));
