@@ -77,6 +77,8 @@ const AdminDashboard = () => {
   const [showDeleteCandidateConfirm, setShowDeleteCandidateConfirm] = useState(false);
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [isClearingData, setIsClearingData] = useState(false);
+  const [showUpdateVotersConfirm, setShowUpdateVotersConfirm] = useState(false);
+  const [preVotingError, setPreVotingError] = useState<string | null>(null);
 
   // Track initial voter count when voting started
   const [initialVoterCount, setInitialVoterCount] = useState<number | null>(null);
