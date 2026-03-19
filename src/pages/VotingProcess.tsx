@@ -197,13 +197,13 @@ const VotingProcess = () => {
             <div className="w-20 h-20 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
               <Pause className="w-10 h-10 text-warning" />
             </div>
-            <h2 className="text-3xl font-display font-bold text-foreground">
+            <h2 style={{fontFamily: "sans-serif"}} className="text-3xl font-display font-bold text-foreground">
               Votación Pausada Temporalmente
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p style={{fontFamily: "sans-serif"}} className="text-lg text-muted-foreground leading-relaxed">
               El proceso de votación ha sido pausado temporalmente. Por favor espere.
             </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div  className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
               Esperando reanudación...
             </div>
@@ -249,16 +249,16 @@ const VotingProcess = () => {
                 transition={{ duration: 0.3 }}
                 className="w-full max-w-5xl"
               >
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-center text-foreground mb-2">
+                <h1 style={{fontFamily: "sans-serif"}} className="text-3xl md:text-4xl font-display font-bold text-center text-foreground mb-2">
                   Votar por {currentArea}
                 </h1>
-                <p className="text-muted-foreground text-center mb-8 text-lg">
+                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-lg">
                   Seleccione un candidato o elija Voto en Blanco
                 </p>
 
                 {areaCandidates.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground text-xl">
+                    <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-xl">
                       No hay candidatos registrados para esta área
                     </p>
                   </div>

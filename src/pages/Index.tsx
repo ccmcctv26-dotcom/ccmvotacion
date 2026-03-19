@@ -83,12 +83,12 @@ const Index = () => {
           >
             <div className="flex items-center justify-center gap-3 text-destructive">
               <AlertTriangle className="w-8 h-8" />
-              <h2 className="text-2xl font-display font-bold">Votación Finalizada</h2>
+              <h2 style={{fontFamily: "sans-serif"}} className="text-2xl font-display font-bold">Votación Finalizada</h2>
             </div>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+            <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-lg leading-relaxed">
               El proceso de votación para las Elecciones 2026 de la Cooperativa Comarapa R.L. ha concluido.
             </p>
-            <p className="text-muted-foreground text-base">
+            <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-base">
               Agradecemos su participación. Los resultados serán publicados oportunamente.
             </p>
           </motion.div>

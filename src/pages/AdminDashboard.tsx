@@ -47,6 +47,8 @@ type VoteRecord = {
   voter_token: string;
 };
 
+const fontFamily = { fontFamily: "sans-serif" };
+
 const AREAS = ["Administración", "Vigilancia", "Tribunal de Honor", "Comité Electoral"];
 const CHART_COLORS = ["#e8740a", "#f59e0b", "#06b6d4", "#8b5cf6", "#ef4444", "#10b981", "#6366f1", "#ec4899"];
 const RANK_ICONS = [Trophy, Medal, Award];
@@ -589,7 +591,7 @@ const AdminDashboard = () => {
             {tab === "dashboard" && (
               <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div>
-                  <h1 className="text-3xl font-display font-bold text-foreground">Dashboard</h1>
+                  <h1 style={fontFamily} className="text-3xl font-display font-bold text-foreground">Dashboard</h1>
                   <p className="text-muted-foreground">Resumen en tiempo real de las elecciones</p>
                 </div>
 
@@ -616,7 +618,7 @@ const AdminDashboard = () => {
                   <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <Clock className="w-5 h-5 text-primary" />
-                      <h3 className="font-display font-bold text-lg">Tiempo de Votación</h3>
+                      <h3 style={fontFamily} className="font-display font-bold text-lg">Tiempo de Votación</h3>
                     </div>
                     {session?.started_at ? (
                       <div className="space-y-3">
@@ -645,7 +647,7 @@ const AdminDashboard = () => {
                   <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <TrendingUp className="w-5 h-5 text-primary" />
-                      <h3 className="font-display font-bold text-lg">Progreso de Participación</h3>
+                      <h3 style={fontFamily} className="font-display font-bold text-lg">Progreso de Participación</h3>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
@@ -663,13 +665,13 @@ const AdminDashboard = () => {
 
                 {/* Rankings per area */}
                 <div className="space-y-4">
-                  <h2 className="text-xl font-display font-bold text-foreground">Posiciones por Área</h2>
+                  <h2 style={fontFamily} className="text-xl font-display font-bold text-foreground">Posiciones por Área</h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {AREAS.map((area) => {
                       const results = getAreaResults(area);
                       return (
                         <div key={area} className="bg-card rounded-xl border border-border p-6 shadow-card">
-                          <h3 className="font-display font-bold text-lg mb-4 text-card-foreground border-b border-border pb-3">{area}</h3>
+                          <h3 style={fontFamily} className="font-display font-bold text-lg mb-4 text-card-foreground border-b border-border pb-3">{area}</h3>
                           {results.candidates.length === 0 ? (
                             <p className="text-muted-foreground text-sm">Sin candidatos</p>
                           ) : (
@@ -715,7 +717,7 @@ const AdminDashboard = () => {
               <motion.div key="candidates" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-3xl font-display font-bold text-foreground">Candidatos</h1>
+                    <h1 style={fontFamily} className="text-3xl font-display font-bold text-foreground">Candidatos</h1>
                     <p className="text-muted-foreground">Gestión de candidatos por área</p>
                   </div>
                   <button
@@ -779,7 +781,7 @@ const AdminDashboard = () => {
                   if (areaCands.length === 0 && !session) return null;
                   return (
                     <div key={area}>
-                      <h3 className="font-display font-bold text-lg text-foreground mb-3">{area}</h3>
+                      <h3 style={fontFamily} className="font-display font-bold text-lg text-foreground mb-3">{area}</h3>
                       {areaCands.length === 0 ? (
                         <p className="text-muted-foreground text-sm mb-4">No hay candidatos registrados</p>
                       ) : (
@@ -823,7 +825,7 @@ const AdminDashboard = () => {
             {tab === "control" && (
               <motion.div key="control" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div>
-                  <h1 className="text-3xl font-display font-bold text-foreground">Control de Votación</h1>
+                  <h1 style={fontFamily} className="text-3xl font-display font-bold text-foreground">Control de Votación</h1>
                   <p className="text-muted-foreground">Administrar sesión de votación</p>
                 </div>
 
@@ -921,7 +923,7 @@ const AdminDashboard = () => {
               <motion.div key="reports" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-3xl font-display font-bold text-foreground">Reportes</h1>
+                    <h1 style={fontFamily} className="text-3xl font-display font-bold text-foreground">Reportes</h1>
                     <p className="text-muted-foreground">Resultados detallados por área</p>
                   </div>
                   <div className="flex gap-2">
@@ -950,7 +952,7 @@ const AdminDashboard = () => {
 
                 {/* Summary */}
                 <div className="bg-card rounded-xl border border-border p-6 shadow-card">
-                  <h3 className="font-display font-bold text-lg mb-2 text-card-foreground">Resumen General</h3>
+                  <h3 style={fontFamily} className="font-display font-bold text-lg mb-2 text-card-foreground">Resumen General</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-2xl font-bold text-foreground">{totalVoters}</p>
@@ -984,7 +986,7 @@ const AdminDashboard = () => {
                     <div key={area} className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-display font-bold text-xl text-card-foreground">{area}</h3>
+                          <h3 style={fontFamily} className="font-display font-bold text-xl text-card-foreground">{area}</h3>
                           <p className="text-sm text-muted-foreground">Total votos: {results.total}</p>
                         </div>
                         {results.candidates.length > 0 && results.candidates[0].votes > 0 && (
@@ -1173,7 +1175,7 @@ const AdminDashboard = () => {
               <span className="font-bold text-destructive">¡ATENCIÓN!</span> Esta acción eliminará permanentemente:
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>Todos los votos registrados</li>
-                <li>Todos los candidatos</li>
+                <li>Todos los </li>
                 <li>La sesión de votación actual</li>
               </ul>
               <p className="mt-3 font-semibold">Esta acción NO se puede deshacer.</p>

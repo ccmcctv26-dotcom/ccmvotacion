@@ -25,3 +25,5 @@ dist-ssr
 
 # Electron Builder files
 dist-electron
+
+candidates.md
