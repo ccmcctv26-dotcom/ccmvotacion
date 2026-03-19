@@ -1180,6 +1180,24 @@ const AdminDashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirmation: Update Voter Count */}
+      <AlertDialog open={showUpdateVotersConfirm} onOpenChange={setShowUpdateVotersConfirm}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl">Confirmar Actualización</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Está seguro que desea actualizar el total de votantes habilitados a <span className="font-bold">{totalVoters}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUpdateVoterCount} className="gradient-primary text-primary-foreground">
+              Confirmar Cambio
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
