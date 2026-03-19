@@ -846,8 +846,8 @@ const AdminDashboard = () => {
                         disabled={isVotingInProgress}
                         className="w-full max-w-xs px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-lg disabled:opacity-50"
                       />
-                      {!isVotingInProgress && totalVoters !== session?.total_eligible_voters && (
-                        <button onClick={handleUpdateVoterCount}
+                      {!isVotingInProgress && session && totalVoters !== session.total_eligible_voters && (
+                        <button onClick={handleUpdateVoterCountClick}
                           className="px-4 py-3 rounded-lg gradient-primary text-primary-foreground font-medium text-sm">
                           Actualizar
                         </button>
