@@ -276,7 +276,13 @@ const AdminDashboard = () => {
     setTotalVoters(Math.max(0, newValue));
   };
 
-  const handleUpdateVoterCount = async () => {
+  const handleUpdateVoterCountClick = () => {
+    if (!session || isVotingInProgress) return;
+    setShowUpdateVotersConfirm(true);
+  };
+
+  const handleConfirmUpdateVoterCount = async () => {
+    setShowUpdateVotersConfirm(false);
     if (!session || isVotingInProgress) return;
 
     const { error } = await supabase
