@@ -861,6 +861,13 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
+                  {preVotingError && (
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                      <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                      <p className="text-sm font-medium">{preVotingError}</p>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-3">
                     {/* Start Voting */}
                     {(!session || session.status === "closed") && (
