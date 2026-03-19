@@ -77,6 +77,8 @@ const AdminDashboard = () => {
   const [showDeleteCandidateConfirm, setShowDeleteCandidateConfirm] = useState(false);
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [isClearingData, setIsClearingData] = useState(false);
+  const [showUpdateVotersConfirm, setShowUpdateVotersConfirm] = useState(false);
+  const [preVotingError, setPreVotingError] = useState<string | null>(null);
 
   // Track initial voter count when voting started
   const [initialVoterCount, setInitialVoterCount] = useState<number | null>(null);
@@ -202,7 +204,19 @@ const AdminDashboard = () => {
   };
 
   // Voting control handlers
-  const handleOpenVotingClick = () => setShowOpenVotingConfirm(true);
+  const handleOpenVotingClick = () => {
+    // Validate: must have candidates and voter count > 0
+    if (candidates.length === 0) {
+      setPreVotingError("Debe registrar al menos un candidato antes de iniciar la votación.");
+      return;
+    }
+    if (totalVoters <= 0) {
+      setPreVotingError("Debe registrar la cantidad de votantes habilitados antes de iniciar la votación.");
+      return;
+    }
+    setPreVotingError(null);
+    setShowOpenVotingConfirm(true);
+  };
   const handleConfirmOpenVoting = () => {
     setShowOpenVotingConfirm(false);
     createOrUpdateSession("open");
@@ -262,7 +276,13 @@ const AdminDashboard = () => {
     setTotalVoters(Math.max(0, newValue));
   };
 
-  const handleUpdateVoterCount = async () => {
+  const handleUpdateVoterCountClick = () => {
+    if (!session || isVotingInProgress) return;
+    setShowUpdateVotersConfirm(true);
+  };
+
+  const handleConfirmUpdateVoterCount = async () => {
+    setShowUpdateVotersConfirm(false);
     if (!session || isVotingInProgress) return;
 
     const { error } = await supabase
@@ -826,8 +846,8 @@ const AdminDashboard = () => {
                         disabled={isVotingInProgress}
                         className="w-full max-w-xs px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-lg disabled:opacity-50"
                       />
-                      {!isVotingInProgress && totalVoters !== session?.total_eligible_voters && (
-                        <button onClick={handleUpdateVoterCount}
+                      {!isVotingInProgress && session && totalVoters !== session.total_eligible_voters && (
+                        <button onClick={handleUpdateVoterCountClick}
                           className="px-4 py-3 rounded-lg gradient-primary text-primary-foreground font-medium text-sm">
                           Actualizar
                         </button>
@@ -840,6 +860,13 @@ const AdminDashboard = () => {
                       ● {statusInfo.label}
                     </div>
                   </div>
+
+                  {preVotingError && (
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                      <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                      <p className="text-sm font-medium">{preVotingError}</p>
+                    </div>
+                  )}
 
                   <div className="flex flex-wrap gap-3">
                     {/* Start Voting */}
@@ -1156,6 +1183,24 @@ const AdminDashboard = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmClearData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Sí, Eliminar Todo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation: Update Voter Count */}
+      <AlertDialog open={showUpdateVotersConfirm} onOpenChange={setShowUpdateVotersConfirm}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl">Confirmar Actualización</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Está seguro que desea actualizar el total de votantes habilitados a <span className="font-bold">{totalVoters}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUpdateVoterCount} className="gradient-primary text-primary-foreground">
+              Confirmar Cambio
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
