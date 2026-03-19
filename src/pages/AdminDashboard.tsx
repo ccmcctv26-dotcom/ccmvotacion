@@ -204,7 +204,19 @@ const AdminDashboard = () => {
   };
 
   // Voting control handlers
-  const handleOpenVotingClick = () => setShowOpenVotingConfirm(true);
+  const handleOpenVotingClick = () => {
+    // Validate: must have candidates and voter count > 0
+    if (candidates.length === 0) {
+      setPreVotingError("Debe registrar al menos un candidato antes de iniciar la votación.");
+      return;
+    }
+    if (totalVoters <= 0) {
+      setPreVotingError("Debe registrar la cantidad de votantes habilitados antes de iniciar la votación.");
+      return;
+    }
+    setPreVotingError(null);
+    setShowOpenVotingConfirm(true);
+  };
   const handleConfirmOpenVoting = () => {
     setShowOpenVotingConfirm(false);
     createOrUpdateSession("open");
