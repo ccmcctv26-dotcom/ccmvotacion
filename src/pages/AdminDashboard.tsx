@@ -77,11 +77,14 @@ const AdminDashboard = () => {
   const [showDeleteCandidateConfirm, setShowDeleteCandidateConfirm] = useState(false);
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [isClearingData, setIsClearingData] = useState(false);
+  const [showUpdateVotersConfirm, setShowUpdateVotersConfirm] = useState(false);
+  const [preVotingError, setPreVotingError] = useState<string | null>(null);
 
   // Track initial voter count when voting started
   const [initialVoterCount, setInitialVoterCount] = useState<number | null>(null);
 
   const isVotingActive = session?.status === "open" || session?.status === "paused";
+  const isVotingInProgress = session?.status === "open";
   const isLocked = isVotingActive;
 
   useEffect(() => {
@@ -125,8 +128,10 @@ const AdminDashboard = () => {
     if (sessions && sessions.length > 0) {
       setSession(sessions[0]);
       setTotalVoters(sessions[0].total_eligible_voters);
-      if (sessions[0].status === "open" || sessions[0].status === "paused") {
+      if (sessions[0].status === "open") {
         setInitialVoterCount(sessions[0].total_eligible_voters);
+      } else {
+        setInitialVoterCount(null);
       }
 
       const { data: cands } = await supabase
@@ -144,6 +149,7 @@ const AdminDashboard = () => {
       setSession(null);
       setCandidates([]);
       setVotes([]);
+      setInitialVoterCount(null);
     }
   };
 
@@ -154,7 +160,9 @@ const AdminDashboard = () => {
         fetchData();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const handleLogout = () => {
@@ -163,9 +171,18 @@ const AdminDashboard = () => {
   };
 
   const updateSessionStatus = async (status: string, extras: Record<string, unknown> = {}) => {
-    if (session) {
-      await supabase.from("voting_sessions").update({ status, ...extras }).eq("id", session.id);
+    if (!session) return;
+
+    const { error } = await supabase
+      .from("voting_sessions")
+      .update({ status, ...extras })
+      .eq("id", session.id);
+
+    if (error) {
+      console.error("Error updating session status:", error);
+      return;
     }
+
     fetchData();
   };
 
@@ -187,7 +204,19 @@ const AdminDashboard = () => {
   };
 
   // Voting control handlers
-  const handleOpenVotingClick = () => setShowOpenVotingConfirm(true);
+  const handleOpenVotingClick = () => {
+    // Validate: must have candidates and voter count > 0
+    if (candidates.length === 0) {
+      setPreVotingError("Debe registrar al menos un candidato antes de iniciar la votación.");
+      return;
+    }
+    if (totalVoters <= 0) {
+      setPreVotingError("Debe registrar la cantidad de votantes habilitados antes de iniciar la votación.");
+      return;
+    }
+    setPreVotingError(null);
+    setShowOpenVotingConfirm(true);
+  };
   const handleConfirmOpenVoting = () => {
     setShowOpenVotingConfirm(false);
     createOrUpdateSession("open");
@@ -195,21 +224,21 @@ const AdminDashboard = () => {
   };
 
   const handlePauseClick = () => setShowPauseConfirm(true);
-  const handleConfirmPause = () => {
+  const handleConfirmPause = async () => {
     setShowPauseConfirm(false);
-    updateSessionStatus("paused");
+    await updateSessionStatus("paused");
   };
 
   const handleResumeClick = () => setShowResumeConfirm(true);
-  const handleConfirmResume = () => {
+  const handleConfirmResume = async () => {
     setShowResumeConfirm(false);
-    updateSessionStatus("open");
+    await updateSessionStatus("open");
   };
 
   const handleEndClick = () => setShowEndConfirm(true);
-  const handleConfirmEnd = () => {
+  const handleConfirmEnd = async () => {
     setShowEndConfirm(false);
-    updateSessionStatus("closed", { ended_at: new Date().toISOString() });
+    await updateSessionStatus("closed", { ended_at: new Date().toISOString() });
   };
 
   const handleClearDataClick = () => {
@@ -237,18 +266,35 @@ const AdminDashboard = () => {
     }
   };
 
-  // Voter count change handler - only allow increase during voting
+  // Voter count change handler - block edits while voting is in progress
   const handleVoterCountChange = (newValue: number) => {
-    if (isVotingActive && initialVoterCount !== null && newValue < initialVoterCount) {
-      return; // Can't reduce during voting
+    if (isVotingInProgress) {
+      setTotalVoters(session?.total_eligible_voters ?? totalVoters);
+      return;
     }
-    setTotalVoters(newValue);
+
+    setTotalVoters(Math.max(0, newValue));
   };
 
-  const handleUpdateVoterCount = async () => {
-    if (!session) return;
-    await supabase.from("voting_sessions").update({ total_eligible_voters: totalVoters }).eq("id", session.id);
-    if (isVotingActive) setInitialVoterCount(Math.max(initialVoterCount || 0, totalVoters));
+  const handleUpdateVoterCountClick = () => {
+    if (!session || isVotingInProgress) return;
+    setShowUpdateVotersConfirm(true);
+  };
+
+  const handleConfirmUpdateVoterCount = async () => {
+    setShowUpdateVotersConfirm(false);
+    if (!session || isVotingInProgress) return;
+
+    const { error } = await supabase
+      .from("voting_sessions")
+      .update({ total_eligible_voters: totalVoters })
+      .eq("id", session.id);
+
+    if (error) {
+      console.error("Error updating eligible voters:", error);
+      return;
+    }
+
     fetchData();
   };
 
@@ -785,21 +831,23 @@ const AdminDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
                       Total de Votantes Habilitados
-                      {isVotingActive && (
-                        <span className="ml-2 text-xs text-warning font-normal">(Solo se permite incrementar durante la votación)</span>
-                      )}
+                      {isVotingInProgress ? (
+                        <span className="ml-2 text-xs text-warning font-normal">(No editable durante votación en curso)</span>
+                      ) : session?.status === "paused" ? (
+                        <span className="ml-2 text-xs text-success font-normal">(Puede aumentar o disminuir con la votación detenida)</span>
+                      ) : null}
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
                         type="number"
                         value={totalVoters}
                         onChange={(e) => handleVoterCountChange(parseInt(e.target.value) || 0)}
-                        min={isVotingActive && initialVoterCount ? initialVoterCount : 0}
-                        disabled={session?.status === "closed" && !!session}
+                        min={0}
+                        disabled={isVotingInProgress}
                         className="w-full max-w-xs px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-lg disabled:opacity-50"
                       />
-                      {isVotingActive && totalVoters !== session?.total_eligible_voters && (
-                        <button onClick={handleUpdateVoterCount}
+                      {!isVotingInProgress && session && totalVoters !== session.total_eligible_voters && (
+                        <button onClick={handleUpdateVoterCountClick}
                           className="px-4 py-3 rounded-lg gradient-primary text-primary-foreground font-medium text-sm">
                           Actualizar
                         </button>
@@ -812,6 +860,13 @@ const AdminDashboard = () => {
                       ● {statusInfo.label}
                     </div>
                   </div>
+
+                  {preVotingError && (
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                      <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                      <p className="text-sm font-medium">{preVotingError}</p>
+                    </div>
+                  )}
 
                   <div className="flex flex-wrap gap-3">
                     {/* Start Voting */}
@@ -1128,6 +1183,24 @@ const AdminDashboard = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmClearData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Sí, Eliminar Todo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation: Update Voter Count */}
+      <AlertDialog open={showUpdateVotersConfirm} onOpenChange={setShowUpdateVotersConfirm}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl">Confirmar Actualización</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              ¿Está seguro que desea actualizar el total de votantes habilitados a <span className="font-bold">{totalVoters}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUpdateVoterCount} className="gradient-primary text-primary-foreground">
+              Confirmar Cambio
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
