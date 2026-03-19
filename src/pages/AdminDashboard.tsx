@@ -811,20 +811,22 @@ const AdminDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
                       Total de Votantes Habilitados
-                      {isVotingActive && (
-                        <span className="ml-2 text-xs text-warning font-normal">(Solo se permite incrementar durante la votación)</span>
-                      )}
+                      {isVotingInProgress ? (
+                        <span className="ml-2 text-xs text-warning font-normal">(No editable durante votación en curso)</span>
+                      ) : session?.status === "paused" ? (
+                        <span className="ml-2 text-xs text-success font-normal">(Puede aumentar o disminuir con la votación detenida)</span>
+                      ) : null}
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
                         type="number"
                         value={totalVoters}
                         onChange={(e) => handleVoterCountChange(parseInt(e.target.value) || 0)}
-                        min={isVotingActive && initialVoterCount ? initialVoterCount : 0}
-                        disabled={session?.status === "closed" && !!session}
+                        min={0}
+                        disabled={isVotingInProgress}
                         className="w-full max-w-xs px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-lg disabled:opacity-50"
                       />
-                      {isVotingActive && totalVoters !== session?.total_eligible_voters && (
+                      {!isVotingInProgress && totalVoters !== session?.total_eligible_voters && (
                         <button onClick={handleUpdateVoterCount}
                           className="px-4 py-3 rounded-lg gradient-primary text-primary-foreground font-medium text-sm">
                           Actualizar
