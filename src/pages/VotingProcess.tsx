@@ -90,20 +90,40 @@ const VotingProcess = () => {
     fetchData();
 
     // Listen for session status changes (pause/resume/close) and voter limit updates
+    let currentSid = "";
+    let currentEligible = 0;
+
+    // Store session info for realtime callbacks
+    supabase
+      .from("voting_sessions")
+      .select("id, total_eligible_voters")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          currentSid = data[0].id;
+          currentEligible = data[0].total_eligible_voters;
+        }
+      });
+
     const channel = supabase
       .channel("voter-session-status")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "voting_sessions" }, (payload) => {
         const updated = payload.new as any;
         setSessionStatus(updated.status);
         setTotalEligibleVoters(updated.total_eligible_voters);
+        currentEligible = updated.total_eligible_voters;
         if (updated.status === "closed") {
           navigate("/");
         }
+        // Recheck limit when eligible voters change
+        if (currentSid) {
+          checkVoterLimit(currentSid, updated.total_eligible_voters);
+        }
       })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
-        // Re-check voter limit when new votes come in
-        if (sessionId) {
-          checkVoterLimit(sessionId, totalEligibleVoters);
+        if (currentSid) {
+          checkVoterLimit(currentSid, currentEligible);
         }
       })
       .subscribe();
