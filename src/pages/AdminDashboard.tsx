@@ -397,6 +397,7 @@ const AdminDashboard = () => {
   const participationPct = totalVoters > 0 ? ((totalUniqueVoters / totalVoters) * 100).toFixed(1) : "0";
   const remaining = Math.max(0, totalVoters - totalUniqueVoters);
   const progressPct = totalVoters > 0 ? (totalUniqueVoters / totalVoters) * 100 : 0;
+  const voterLimitReached = totalVoters > 0 && totalUniqueVoters >= totalVoters;
 
   const getStatusLabel = () => {
     if (!session) return { label: "Sin Iniciar", color: "text-muted-foreground", bg: "bg-muted/50" };
