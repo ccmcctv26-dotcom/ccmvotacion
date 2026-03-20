@@ -962,6 +962,13 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
+                {voterLimitReached && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-semibold">Se ha alcanzado el límite de votantes habilitados ({totalVoters}). Ya no se pueden emitir más votos.</p>
+                  </div>
+                )}
+
                 {/* Summary */}
                 <div className="bg-card rounded-xl border border-border p-6 shadow-card">
                   <h3 className="font-display font-bold text-lg mb-2 text-card-foreground">Resumen General</h3>
