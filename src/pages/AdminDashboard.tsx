@@ -229,6 +229,14 @@ const AdminDashboard = () => {
     setInitialVoterCount(totalVoters);
   };
 
+  const handleCreateSession = async () => {
+    await supabase.from("voting_sessions").insert({
+      total_eligible_voters: totalVoters,
+      status: "closed",
+    });
+    fetchData();
+  };
+
   const handlePauseClick = () => setShowPauseConfirm(true);
   const handleConfirmPause = async () => {
     setShowPauseConfirm(false);
