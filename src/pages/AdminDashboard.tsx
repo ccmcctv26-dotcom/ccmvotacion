@@ -155,8 +155,14 @@ const AdminDashboard = () => {
 
   const setupRealtime = () => {
     const channel = supabase
-      .channel("admin-votes")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
+      .channel("admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "votes" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "voting_sessions" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "candidates" }, () => {
         fetchData();
       })
       .subscribe();
@@ -391,6 +397,7 @@ const AdminDashboard = () => {
   const participationPct = totalVoters > 0 ? ((totalUniqueVoters / totalVoters) * 100).toFixed(1) : "0";
   const remaining = Math.max(0, totalVoters - totalUniqueVoters);
   const progressPct = totalVoters > 0 ? (totalUniqueVoters / totalVoters) * 100 : 0;
+  const voterLimitReached = totalVoters > 0 && totalUniqueVoters >= totalVoters;
 
   const getStatusLabel = () => {
     if (!session) return { label: "Sin Iniciar", color: "text-muted-foreground", bg: "bg-muted/50" };
@@ -592,6 +599,13 @@ const AdminDashboard = () => {
                   <h1 className="text-3xl font-display font-bold text-foreground">Dashboard</h1>
                   <p className="text-muted-foreground">Resumen en tiempo real de las elecciones</p>
                 </div>
+
+                {voterLimitReached && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-semibold">Se ha alcanzado el límite de votantes habilitados ({totalVoters}). Ya no se pueden emitir más votos.</p>
+                  </div>
+                )}
 
                 {/* Stats cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -945,6 +959,13 @@ const AdminDashboard = () => {
                   <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
                     <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
                     <p className="text-sm">La votación está activa. Debe finalizar la votación antes de poder limpiar los datos del sistema.</p>
+                  </div>
+                )}
+
+                {voterLimitReached && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-semibold">Se ha alcanzado el límite de votantes habilitados ({totalVoters}). Ya no se pueden emitir más votos.</p>
                   </div>
                 )}
 
