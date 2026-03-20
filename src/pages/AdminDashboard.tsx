@@ -155,8 +155,14 @@ const AdminDashboard = () => {
 
   const setupRealtime = () => {
     const channel = supabase
-      .channel("admin-votes")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
+      .channel("admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "votes" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "voting_sessions" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "candidates" }, () => {
         fetchData();
       })
       .subscribe();
