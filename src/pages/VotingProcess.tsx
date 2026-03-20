@@ -37,6 +37,17 @@ const VotingProcess = () => {
   const [voterLimitReached, setVoterLimitReached] = useState(false);
   const [totalEligibleVoters, setTotalEligibleVoters] = useState(0);
 
+  const checkVoterLimit = useCallback(async (sid: string, eligible: number) => {
+    const { data: voteData } = await supabase
+      .from("votes")
+      .select("voter_token")
+      .eq("session_id", sid);
+    if (voteData) {
+      const uniqueVoters = new Set(voteData.map((v) => v.voter_token)).size;
+      setVoterLimitReached(uniqueVoters >= eligible);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: sessions } = await supabase
@@ -62,6 +73,7 @@ const VotingProcess = () => {
       }
 
       setSessionId(currentSession.id);
+      setTotalEligibleVoters(currentSession.total_eligible_voters);
 
       const { data: candidateData } = await supabase
         .from("candidates")
@@ -71,24 +83,33 @@ const VotingProcess = () => {
       if (candidateData) {
         setCandidates(candidateData);
       }
+
+      await checkVoterLimit(currentSession.id, currentSession.total_eligible_voters);
     };
 
     fetchData();
 
-    // Listen for session status changes (pause/resume/close)
+    // Listen for session status changes (pause/resume/close) and voter limit updates
     const channel = supabase
       .channel("voter-session-status")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "voting_sessions" }, (payload) => {
-        const newStatus = (payload.new as any).status;
-        setSessionStatus(newStatus);
-        if (newStatus === "closed") {
+        const updated = payload.new as any;
+        setSessionStatus(updated.status);
+        setTotalEligibleVoters(updated.total_eligible_voters);
+        if (updated.status === "closed") {
           navigate("/");
+        }
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
+        // Re-check voter limit when new votes come in
+        if (sessionId) {
+          checkVoterLimit(sessionId, totalEligibleVoters);
         }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [navigate]);
+  }, [navigate, checkVoterLimit]);
 
   useEffect(() => {
     const voted = sessionStorage.getItem("hasVoted");
