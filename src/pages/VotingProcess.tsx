@@ -163,7 +163,7 @@ const VotingProcess = () => {
   }, [selectedCandidate, isBlankSelected, currentArea, votes, step, isPaused]);
 
   const submitVotes = async (allVotes: VoteSelection[]) => {
-    if (!sessionId || isSubmitting) return;
+    if (!sessionId || isSubmitting || voterLimitReached) return;
     setIsSubmitting(true);
 
     try {
