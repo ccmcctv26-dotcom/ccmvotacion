@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import CandidateCard from "@/components/CandidateCard";
 import BlankVoteCard from "@/components/BlankVoteCard";
-import { Pause } from "lucide-react";
+import { Pause, AlertTriangle } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const AREAS = ["Administración", "Vigilancia", "Tribunal de Honor", "Comité Electoral"] as const;
