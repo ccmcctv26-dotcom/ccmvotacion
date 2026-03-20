@@ -141,7 +141,7 @@ const VotingProcess = () => {
   };
 
   const handleNext = useCallback(() => {
-    if (isPaused) return;
+    if (isPaused || voterLimitReached) return;
     if (!selectedCandidate && !isBlankSelected) return;
 
     const newVote: VoteSelection = {
