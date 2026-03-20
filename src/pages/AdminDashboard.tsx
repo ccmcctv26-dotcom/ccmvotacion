@@ -229,6 +229,14 @@ const AdminDashboard = () => {
     setInitialVoterCount(totalVoters);
   };
 
+  const handleCreateSession = async () => {
+    await supabase.from("voting_sessions").insert({
+      total_eligible_voters: totalVoters,
+      status: "closed",
+    });
+    fetchData();
+  };
+
   const handlePauseClick = () => setShowPauseConfirm(true);
   const handleConfirmPause = async () => {
     setShowPauseConfirm(false);
@@ -751,7 +759,7 @@ const AdminDashboard = () => {
 
                 {!session && (
                   <div className="bg-accent/50 border border-primary/20 rounded-lg p-4 text-accent-foreground">
-                    Primero debe crear una sesión de votación en la pestaña "Control".
+                    Primero debe preparar una sesión de votación en la pestaña "Control" para poder agregar candidatos.
                   </div>
                 )}
 
@@ -883,12 +891,21 @@ const AdminDashboard = () => {
                   )}
 
                   <div className="flex flex-wrap gap-3">
+                    {/* Create Session (without starting) */}
+                    {!session && (
+                      <button onClick={handleCreateSession}
+                        className="flex items-center gap-2 px-6 py-3 rounded-lg bg-info text-info-foreground font-semibold hover:opacity-90 transition-opacity">
+                        <Plus className="w-5 h-5" />
+                        Preparar Sesión
+                      </button>
+                    )}
+
                     {/* Start Voting */}
-                    {(!session || session.status === "closed") && (
+                    {session && session.status === "closed" && (
                       <button onClick={handleOpenVotingClick}
                         className="flex items-center gap-2 px-6 py-3 rounded-lg bg-success text-success-foreground font-semibold hover:opacity-90 transition-opacity">
                         <Play className="w-5 h-5" />
-                        {session ? "Reabrir Votación" : "Crear e Iniciar Votación"}
+                        Iniciar Votación
                       </button>
                     )}
 
