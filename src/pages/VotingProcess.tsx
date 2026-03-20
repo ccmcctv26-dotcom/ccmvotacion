@@ -234,7 +234,28 @@ const VotingProcess = () => {
         </div>
       )}
 
-      {!isPaused && (
+      {/* Voter limit reached overlay */}
+      {!isPaused && voterLimitReached && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-12 shadow-elevated max-w-lg text-center space-y-6"
+          >
+            <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-10 h-10 text-destructive" />
+            </div>
+            <h2 className="text-3xl font-display font-bold text-foreground">
+              Límite de Votantes Alcanzado
+            </h2>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Se ha alcanzado el total de votantes habilitados ({totalEligibleVoters}). Ya no se pueden emitir más votos.
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      {!isPaused && !voterLimitReached && (
         <>
           {/* Step indicator */}
           <div className="flex items-center justify-center gap-1 py-4 px-4">
