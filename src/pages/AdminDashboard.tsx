@@ -600,6 +600,13 @@ const AdminDashboard = () => {
                   <p className="text-muted-foreground">Resumen en tiempo real de las elecciones</p>
                 </div>
 
+                {voterLimitReached && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-semibold">Se ha alcanzado el límite de votantes habilitados ({totalVoters}). Ya no se pueden emitir más votos.</p>
+                  </div>
+                )}
+
                 {/* Stats cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
