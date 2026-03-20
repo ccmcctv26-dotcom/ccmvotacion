@@ -34,6 +34,8 @@ const VotingProcess = () => {
   const [voterToken] = useState(() => crypto.randomUUID());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
+  const [voterLimitReached, setVoterLimitReached] = useState(false);
+  const [totalEligibleVoters, setTotalEligibleVoters] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
