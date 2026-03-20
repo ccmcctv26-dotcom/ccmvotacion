@@ -759,7 +759,7 @@ const AdminDashboard = () => {
 
                 {!session && (
                   <div className="bg-accent/50 border border-primary/20 rounded-lg p-4 text-accent-foreground">
-                    Primero debe crear una sesión de votación en la pestaña "Control".
+                    Primero debe preparar una sesión de votación en la pestaña "Control" para poder agregar candidatos.
                   </div>
                 )}
 
