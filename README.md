@@ -36,6 +36,32 @@ npm i
 npm run dev
 ```
 
+## Running as Desktop App with Electron
+
+This project can be run as a desktop application using Electron.
+
+### Development Mode
+
+```sh
+# Install dependencies (if not already done)
+npm install
+
+# Run in development mode (starts Vite dev server and Electron)
+npm run electron-dev
+```
+
+### Production Build
+
+```sh
+# Build the app
+npm run build
+
+# Package as desktop app
+npm run electron-pack
+```
+
+The packaged app will be in the `dist-electron` directory.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).

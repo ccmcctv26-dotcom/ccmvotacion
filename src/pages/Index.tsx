@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Pause } from "lucide-react";
 import logo from "@/assets/logo.png";
 
+const fontFamily = { fontFamily: "sans-serif" };
+
 const Index = () => {
   const navigate = useNavigate();
   const [sessionStatus, setSessionStatus] = useState<string | null>(null);
@@ -65,10 +67,10 @@ const Index = () => {
         />
 
         <div className="space-y-3">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground tracking-tight">
+          <h1 style={fontFamily} className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground tracking-tight">
             Cooperativa Comarapa R.L.
           </h1>
-          <p className="text-xl md:text-2xl lg:text-3xl text-primary font-display font-semibold">
+          <p style={fontFamily} className="text-xl md:text-2xl lg:text-3xl text-primary font-display font-semibold">
             Elecciones 2026
           </p>
         </div>
@@ -81,12 +83,12 @@ const Index = () => {
           >
             <div className="flex items-center justify-center gap-3 text-destructive">
               <AlertTriangle className="w-8 h-8" />
-              <h2 className="text-2xl font-display font-bold">Votación Finalizada</h2>
+              <h2 style={{fontFamily: "sans-serif"}} className="text-2xl font-display font-bold">Votación Finalizada</h2>
             </div>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+            <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-lg leading-relaxed">
               El proceso de votación para las Elecciones 2026 de la Cooperativa Comarapa R.L. ha concluido.
             </p>
-            <p className="text-muted-foreground text-base">
+            <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-base">
               Agradecemos su participación. Los resultados serán publicados oportunamente.
             </p>
           </motion.div>

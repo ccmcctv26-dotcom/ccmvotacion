@@ -75,7 +75,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.voting_sessions;
 
 -- Storage bucket for candidate photos
 INSERT INTO storage.buckets (id, name, public) VALUES ('candidate-photos', 'candidate-photos', true);
-
+ 
 CREATE POLICY "Anyone can upload candidate photos"
   ON storage.objects FOR INSERT
   WITH CHECK (bucket_id = 'candidate-photos');
