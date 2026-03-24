@@ -155,8 +155,14 @@ const AdminDashboard = () => {
 
   const setupRealtime = () => {
     const channel = supabase
-      .channel("admin-votes")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
+      .channel("admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "votes" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "voting_sessions" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "candidates" }, () => {
         fetchData();
       })
       .subscribe();
@@ -190,7 +196,6 @@ const AdminDashboard = () => {
     if (session) {
       const updates: Record<string, unknown> = { status, total_eligible_voters: totalVoters };
       if (status === "open" && !session.started_at) updates.started_at = new Date().toISOString();
-      if (status === "open") updates.started_at = new Date().toISOString();
       if (status === "closed") updates.ended_at = new Date().toISOString();
       await supabase.from("voting_sessions").update(updates).eq("id", session.id);
     } else {
@@ -221,6 +226,14 @@ const AdminDashboard = () => {
     setShowOpenVotingConfirm(false);
     createOrUpdateSession("open");
     setInitialVoterCount(totalVoters);
+  };
+
+  const handleCreateSession = async () => {
+    await supabase.from("voting_sessions").insert({
+      total_eligible_voters: totalVoters,
+      status: "closed",
+    });
+    fetchData();
   };
 
   const handlePauseClick = () => setShowPauseConfirm(true);
@@ -391,6 +404,7 @@ const AdminDashboard = () => {
   const participationPct = totalVoters > 0 ? ((totalUniqueVoters / totalVoters) * 100).toFixed(1) : "0";
   const remaining = Math.max(0, totalVoters - totalUniqueVoters);
   const progressPct = totalVoters > 0 ? (totalUniqueVoters / totalVoters) * 100 : 0;
+  const voterLimitReached = totalVoters > 0 && totalUniqueVoters >= totalVoters;
 
   const getStatusLabel = () => {
     if (!session) return { label: "Sin Iniciar", color: "text-muted-foreground", bg: "bg-muted/50" };
@@ -593,6 +607,13 @@ const AdminDashboard = () => {
                   <p className="text-muted-foreground">Resumen en tiempo real de las elecciones</p>
                 </div>
 
+                {voterLimitReached && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-semibold">Se ha alcanzado el límite de votantes habilitados ({totalVoters}). Ya no se pueden emitir más votos.</p>
+                  </div>
+                )}
+
                 {/* Stats cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
@@ -737,7 +758,7 @@ const AdminDashboard = () => {
 
                 {!session && (
                   <div className="bg-accent/50 border border-primary/20 rounded-lg p-4 text-accent-foreground">
-                    Primero debe crear una sesión de votación en la pestaña "Control".
+                    Primero debe preparar una sesión de votación en la pestaña "Control" para poder agregar candidatos.
                   </div>
                 )}
 
@@ -869,12 +890,21 @@ const AdminDashboard = () => {
                   )}
 
                   <div className="flex flex-wrap gap-3">
+                    {/* Create Session (without starting) */}
+                    {!session && (
+                      <button onClick={handleCreateSession}
+                        className="flex items-center gap-2 px-6 py-3 rounded-lg bg-info text-info-foreground font-semibold hover:opacity-90 transition-opacity">
+                        <Plus className="w-5 h-5" />
+                        Preparar Sesión
+                      </button>
+                    )}
+
                     {/* Start Voting */}
-                    {(!session || session.status === "closed") && (
+                    {session && session.status === "closed" && (
                       <button onClick={handleOpenVotingClick}
                         className="flex items-center gap-2 px-6 py-3 rounded-lg bg-success text-success-foreground font-semibold hover:opacity-90 transition-opacity">
                         <Play className="w-5 h-5" />
-                        {session ? "Reabrir Votación" : "Crear e Iniciar Votación"}
+                        Iniciar Votación
                       </button>
                     )}
 
@@ -945,6 +975,13 @@ const AdminDashboard = () => {
                   <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
                     <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
                     <p className="text-sm">La votación está activa. Debe finalizar la votación antes de poder limpiar los datos del sistema.</p>
+                  </div>
+                )}
+
+                {voterLimitReached && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3 text-foreground">
+                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-semibold">Se ha alcanzado el límite de votantes habilitados ({totalVoters}). Ya no se pueden emitir más votos.</p>
                   </div>
                 )}
 

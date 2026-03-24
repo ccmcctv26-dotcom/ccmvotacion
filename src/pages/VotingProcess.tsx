@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import CandidateCard from "@/components/CandidateCard";
 import BlankVoteCard from "@/components/BlankVoteCard";
-import { Pause } from "lucide-react";
+import { Pause, AlertTriangle } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const AREAS = ["Administración", "Vigilancia", "Tribunal de Honor", "Comité Electoral"] as const;
@@ -34,6 +34,19 @@ const VotingProcess = () => {
   const [voterToken] = useState(() => crypto.randomUUID());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
+  const [voterLimitReached, setVoterLimitReached] = useState(false);
+  const [totalEligibleVoters, setTotalEligibleVoters] = useState(0);
+
+  const checkVoterLimit = useCallback(async (sid: string, eligible: number) => {
+    const { data: voteData } = await supabase
+      .from("votes")
+      .select("voter_token")
+      .eq("session_id", sid);
+    if (voteData) {
+      const uniqueVoters = new Set(voteData.map((v) => v.voter_token)).size;
+      setVoterLimitReached(uniqueVoters >= eligible);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +73,7 @@ const VotingProcess = () => {
       }
 
       setSessionId(currentSession.id);
+      setTotalEligibleVoters(currentSession.total_eligible_voters);
 
       const { data: candidateData } = await supabase
         .from("candidates")
@@ -69,24 +83,53 @@ const VotingProcess = () => {
       if (candidateData) {
         setCandidates(candidateData);
       }
+
+      await checkVoterLimit(currentSession.id, currentSession.total_eligible_voters);
     };
 
     fetchData();
 
-    // Listen for session status changes (pause/resume/close)
+    // Listen for session status changes (pause/resume/close) and voter limit updates
+    let currentSid = "";
+    let currentEligible = 0;
+
+    // Store session info for realtime callbacks
+    supabase
+      .from("voting_sessions")
+      .select("id, total_eligible_voters")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          currentSid = data[0].id;
+          currentEligible = data[0].total_eligible_voters;
+        }
+      });
+
     const channel = supabase
       .channel("voter-session-status")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "voting_sessions" }, (payload) => {
-        const newStatus = (payload.new as any).status;
-        setSessionStatus(newStatus);
-        if (newStatus === "closed") {
+        const updated = payload.new as any;
+        setSessionStatus(updated.status);
+        setTotalEligibleVoters(updated.total_eligible_voters);
+        currentEligible = updated.total_eligible_voters;
+        if (updated.status === "closed") {
           navigate("/");
+        }
+        // Recheck limit when eligible voters change
+        if (currentSid) {
+          checkVoterLimit(currentSid, updated.total_eligible_voters);
+        }
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
+        if (currentSid) {
+          checkVoterLimit(currentSid, currentEligible);
         }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [navigate]);
+  }, [navigate, checkVoterLimit]);
 
   useEffect(() => {
     const voted = sessionStorage.getItem("hasVoted");
@@ -118,7 +161,7 @@ const VotingProcess = () => {
   };
 
   const handleNext = useCallback(() => {
-    if (isPaused) return;
+    if (isPaused || voterLimitReached) return;
     if (!selectedCandidate && !isBlankSelected) return;
 
     const newVote: VoteSelection = {
@@ -140,7 +183,7 @@ const VotingProcess = () => {
   }, [selectedCandidate, isBlankSelected, currentArea, votes, step, isPaused]);
 
   const submitVotes = async (allVotes: VoteSelection[]) => {
-    if (!sessionId || isSubmitting) return;
+    if (!sessionId || isSubmitting || voterLimitReached) return;
     setIsSubmitting(true);
 
     try {
@@ -211,7 +254,28 @@ const VotingProcess = () => {
         </div>
       )}
 
-      {!isPaused && (
+      {/* Voter limit reached overlay */}
+      {!isPaused && voterLimitReached && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-12 shadow-elevated max-w-lg text-center space-y-6"
+          >
+            <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-10 h-10 text-destructive" />
+            </div>
+            <h2 className="text-3xl font-display font-bold text-foreground">
+              Límite de Votantes Alcanzado
+            </h2>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Se ha alcanzado el total de votantes habilitados ({totalEligibleVoters}). Ya no se pueden emitir más votos.
+            </p>
+          </motion.div>
+        </div>
+      )}
+
+      {!isPaused && !voterLimitReached && (
         <>
           {/* Step indicator */}
           <div className="flex items-center justify-center gap-1 py-4 px-4">
