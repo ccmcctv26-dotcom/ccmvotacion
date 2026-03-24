@@ -196,7 +196,6 @@ const AdminDashboard = () => {
     if (session) {
       const updates: Record<string, unknown> = { status, total_eligible_voters: totalVoters };
       if (status === "open" && !session.started_at) updates.started_at = new Date().toISOString();
-      if (status === "open") updates.started_at = new Date().toISOString();
       if (status === "closed") updates.ended_at = new Date().toISOString();
       await supabase.from("voting_sessions").update(updates).eq("id", session.id);
     } else {
