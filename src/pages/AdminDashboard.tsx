@@ -1263,6 +1263,21 @@ const AdminDashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Cropper Modal */}
+      {cropImageSrc && !croppedBlob && (
+        <ImageCropper
+          imageSrc={cropImageSrc}
+          onCropComplete={(blob) => {
+            setCroppedBlob(blob);
+            setCropImageSrc(null);
+          }}
+          onCancel={() => {
+            setCropImageSrc(null);
+            setFormPhoto(null);
+          }}
+        />
+      )}
     </div>
   );
 };
