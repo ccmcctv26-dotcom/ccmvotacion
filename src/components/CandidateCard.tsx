@@ -53,7 +53,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       {/* <div className={`w-36 h-36 rounded-full overflow-hidden border-4 transition-colors ${
         isSelected ? "border-primary" : "border-border"
       }`}> */}
-      <div className={`w-full h-full  overflow-hidden transition-colors ${
+      <div className={`w-full aspect-square overflow-hidden transition-colors ${
         isSelected ? "border-primary" : "border-border"
       }`}>
         {candidate.photo_url ? (
