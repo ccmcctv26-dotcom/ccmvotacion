@@ -800,8 +800,11 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1">Foto</label>
-                        <input type="file" accept="image/*" onChange={(e) => setFormPhoto(e.target.files?.[0] || null)}
+                        <input type="file" accept="image/*" onChange={handleFileSelect}
                           className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm" />
+                        {croppedBlob && (
+                          <p className="text-xs text-success mt-1">✓ Imagen recortada lista</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
