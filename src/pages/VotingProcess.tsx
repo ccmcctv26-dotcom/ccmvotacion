@@ -282,7 +282,7 @@ const VotingProcess = () => {
             {stepLabels.map((label, i) => (
               <div key={label} className="flex items-center gap-1">
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-base font-semibold transition-all ${
                     i === step
                       ? "bg-primary text-primary-foreground shadow-elevated"
                       : i < step
@@ -290,10 +290,10 @@ const VotingProcess = () => {
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-bold">
+                  <span className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
                     {i < step ? "✓" : i + 1}
                   </span>
-                  <span className="hidden md:inline text-sm">{label}</span>
+                  <span className="hidden md:inline text-base">{label}</span>
                 </div>
                 {i < totalSteps - 1 && (
                   <div className={`w-4 h-0.5 ${i < step ? "bg-success" : "bg-border"}`} />
@@ -313,10 +313,10 @@ const VotingProcess = () => {
                 transition={{ duration: 0.3 }}
                 className="w-full max-w-5xl"
               >
-                <h1 style={{fontFamily: "sans-serif"}} className="text-3xl md:text-4xl font-display font-bold text-center text-foreground mb-2">
+                <h1 style={{fontFamily: "sans-serif"}} className="text-4xl md:text-5xl font-display font-bold text-center text-foreground mb-2">
                   Votar por {currentArea}
                 </h1>
-                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-lg">
+                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-xl">
                   Seleccione un candidato o elija Voto en Blanco
                 </p>
 
@@ -327,7 +327,7 @@ const VotingProcess = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
                     {areaCandidates.map((candidate) => (
                       <CandidateCard
                         key={candidate.id}

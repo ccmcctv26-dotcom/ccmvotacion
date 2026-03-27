@@ -53,7 +53,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       {/* <div className={`w-36 h-36 rounded-full overflow-hidden border-4 transition-colors ${
         isSelected ? "border-primary" : "border-border"
       }`}> */}
-      <div className={`w-full h-full  overflow-hidden transition-colors ${
+      <div className={`w-full aspect-square overflow-hidden transition-colors ${
         isSelected ? "border-primary" : "border-border"
       }`}>
         {candidate.photo_url ? (
@@ -70,7 +70,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       </div>
 
       {/* Name */}
-      <h3 style={{fontFamily: "sans-serif"}} className={`font-display font-bold text-2xl pb-6 ${
+      <h3 style={{fontFamily: "sans-serif"}} className={`font-display font-bold text-xl md:text-2xl px-2 pb-4 leading-tight ${
         isSelected ? "text-accent-foreground" : "text-card-foreground"
       }`}>
         {candidate.full_name}

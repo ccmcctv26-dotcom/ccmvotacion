@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import logo from "@/assets/logo.png";
+import ImageCropper from "@/components/ImageCropper";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -69,6 +70,8 @@ const AdminDashboard = () => {
   const [formName, setFormName] = useState("");
   const [formArea, setFormArea] = useState(AREAS[0]);
   const [formPhoto, setFormPhoto] = useState<File | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
 
   // Confirmation dialogs
   const [showOpenVotingConfirm, setShowOpenVotingConfirm] = useState(false);
@@ -318,10 +321,11 @@ const AdminDashboard = () => {
     if (!formName.trim() || isLocked) return;
 
     let photoUrl: string | null = null;
-    if (formPhoto && session) {
-      const ext = formPhoto.name.split(".").pop();
+    const photoToUpload = croppedBlob || formPhoto;
+    if (photoToUpload && session) {
+      const ext = croppedBlob ? "jpg" : formPhoto?.name.split(".").pop();
       const path = `${session.id}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("candidate-photos").upload(path, formPhoto);
+      const { error } = await supabase.storage.from("candidate-photos").upload(path, photoToUpload);
       if (!error) {
         const { data: urlData } = supabase.storage.from("candidate-photos").getPublicUrl(path);
         photoUrl = urlData.publicUrl;
@@ -374,6 +378,18 @@ const AdminDashboard = () => {
     setFormName("");
     setFormArea(AREAS[0]);
     setFormPhoto(null);
+    setCropImageSrc(null);
+    setCroppedBlob(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFormPhoto(file);
+    setCroppedBlob(null);
+    const reader = new FileReader();
+    reader.onload = () => setCropImageSrc(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   // Stats
@@ -784,8 +800,11 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1">Foto</label>
-                        <input type="file" accept="image/*" onChange={(e) => setFormPhoto(e.target.files?.[0] || null)}
+                        <input type="file" accept="image/*" onChange={handleFileSelect}
                           className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm" />
+                        {croppedBlob && (
+                          <p className="text-xs text-success mt-1">✓ Imagen recortada lista</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -1244,6 +1263,21 @@ const AdminDashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Cropper Modal */}
+      {cropImageSrc && !croppedBlob && (
+        <ImageCropper
+          imageSrc={cropImageSrc}
+          onCropComplete={(blob) => {
+            setCroppedBlob(blob);
+            setCropImageSrc(null);
+          }}
+          onCancel={() => {
+            setCropImageSrc(null);
+            setFormPhoto(null);
+          }}
+        />
+      )}
     </div>
   );
 };
