@@ -378,6 +378,18 @@ const AdminDashboard = () => {
     setFormName("");
     setFormArea(AREAS[0]);
     setFormPhoto(null);
+    setCropImageSrc(null);
+    setCroppedBlob(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFormPhoto(file);
+    setCroppedBlob(null);
+    const reader = new FileReader();
+    reader.onload = () => setCropImageSrc(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   // Stats
