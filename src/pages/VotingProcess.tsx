@@ -313,10 +313,10 @@ const VotingProcess = () => {
                 transition={{ duration: 0.3 }}
                 className="w-full max-w-5xl"
               >
-                <h1 style={{fontFamily: "sans-serif"}} className="text-3xl md:text-4xl font-display font-bold text-center text-foreground mb-2">
+                <h1 style={{fontFamily: "sans-serif"}} className="text-4xl md:text-5xl font-display font-bold text-center text-foreground mb-2">
                   Votar por {currentArea}
                 </h1>
-                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-lg">
+                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-xl">
                   Seleccione un candidato o elija Voto en Blanco
                 </p>
 
