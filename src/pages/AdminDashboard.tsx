@@ -321,10 +321,11 @@ const AdminDashboard = () => {
     if (!formName.trim() || isLocked) return;
 
     let photoUrl: string | null = null;
-    if (formPhoto && session) {
-      const ext = formPhoto.name.split(".").pop();
+    const photoToUpload = croppedBlob || formPhoto;
+    if (photoToUpload && session) {
+      const ext = croppedBlob ? "jpg" : formPhoto?.name.split(".").pop();
       const path = `${session.id}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("candidate-photos").upload(path, formPhoto);
+      const { error } = await supabase.storage.from("candidate-photos").upload(path, photoToUpload);
       if (!error) {
         const { data: urlData } = supabase.storage.from("candidate-photos").getPublicUrl(path);
         photoUrl = urlData.publicUrl;
