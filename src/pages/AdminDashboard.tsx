@@ -70,6 +70,8 @@ const AdminDashboard = () => {
   const [formName, setFormName] = useState("");
   const [formArea, setFormArea] = useState(AREAS[0]);
   const [formPhoto, setFormPhoto] = useState<File | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
 
   // Confirmation dialogs
   const [showOpenVotingConfirm, setShowOpenVotingConfirm] = useState(false);
