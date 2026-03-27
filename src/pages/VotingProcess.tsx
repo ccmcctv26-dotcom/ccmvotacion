@@ -282,7 +282,7 @@ const VotingProcess = () => {
             {stepLabels.map((label, i) => (
               <div key={label} className="flex items-center gap-1">
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-base font-semibold transition-all ${
                     i === step
                       ? "bg-primary text-primary-foreground shadow-elevated"
                       : i < step
