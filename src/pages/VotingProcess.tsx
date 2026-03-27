@@ -290,10 +290,10 @@ const VotingProcess = () => {
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-bold">
+                  <span className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
                     {i < step ? "✓" : i + 1}
                   </span>
-                  <span className="hidden md:inline text-sm">{label}</span>
+                  <span className="hidden md:inline text-base">{label}</span>
                 </div>
                 {i < totalSteps - 1 && (
                   <div className={`w-4 h-0.5 ${i < step ? "bg-success" : "bg-border"}`} />
