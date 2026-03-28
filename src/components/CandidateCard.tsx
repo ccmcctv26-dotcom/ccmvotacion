@@ -70,7 +70,7 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: CandidateCardProps) 
       </div>
 
       {/* Name */}
-      <h3 style={{fontFamily: "sans-serif"}} className={`font-display font-bold text-xl md:text-2xl px-2 pb-4 leading-tight ${
+      <h3 style={{fontFamily: "sans-serif"}} className={`font-display font-bold text-xl md:text-lg px-2 pb-4 leading-tight ${
         isSelected ? "text-accent-foreground" : "text-card-foreground"
       }`}>
         {candidate.full_name}

@@ -7,7 +7,12 @@ import BlankVoteCard from "@/components/BlankVoteCard";
 import { Pause, AlertTriangle } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-const AREAS = ["Administración", "Vigilancia", "Tribunal de Honor", "Comité Electoral"] as const;
+const AREAS = [
+  "Administración",
+  "Vigilancia",
+  "Tribunal de Honor",
+  "Comité Electoral",
+] as const;
 
 type Candidate = {
   id: string;
@@ -28,7 +33,9 @@ const VotingProcess = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionStatus, setSessionStatus] = useState<string | null>(null);
-  const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<string | null>(
+    null,
+  );
   const [isBlankSelected, setIsBlankSelected] = useState(false);
   const [votes, setVotes] = useState<VoteSelection[]>([]);
   const [voterToken] = useState(() => crypto.randomUUID());
@@ -84,7 +91,10 @@ const VotingProcess = () => {
         setCandidates(candidateData);
       }
 
-      await checkVoterLimit(currentSession.id, currentSession.total_eligible_voters);
+      await checkVoterLimit(
+        currentSession.id,
+        currentSession.total_eligible_voters,
+      );
     };
 
     fetchData();
@@ -108,27 +118,37 @@ const VotingProcess = () => {
 
     const channel = supabase
       .channel("voter-session-status")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "voting_sessions" }, (payload) => {
-        const updated = payload.new as any;
-        setSessionStatus(updated.status);
-        setTotalEligibleVoters(updated.total_eligible_voters);
-        currentEligible = updated.total_eligible_voters;
-        if (updated.status === "closed") {
-          navigate("/");
-        }
-        // Recheck limit when eligible voters change
-        if (currentSid) {
-          checkVoterLimit(currentSid, updated.total_eligible_voters);
-        }
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "votes" }, () => {
-        if (currentSid) {
-          checkVoterLimit(currentSid, currentEligible);
-        }
-      })
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "voting_sessions" },
+        (payload) => {
+          const updated = payload.new as any;
+          setSessionStatus(updated.status);
+          setTotalEligibleVoters(updated.total_eligible_voters);
+          currentEligible = updated.total_eligible_voters;
+          if (updated.status === "closed") {
+            navigate("/");
+          }
+          // Recheck limit when eligible voters change
+          if (currentSid) {
+            checkVoterLimit(currentSid, updated.total_eligible_voters);
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "votes" },
+        () => {
+          if (currentSid) {
+            checkVoterLimit(currentSid, currentEligible);
+          }
+        },
+      )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [navigate, checkVoterLimit]);
 
   useEffect(() => {
@@ -217,13 +237,19 @@ const VotingProcess = () => {
   return (
     <div className="kiosk-fullscreen flex flex-col bg-background">
       {/* Header */}
-      <div className="gradient-primary px-6 py-5 flex items-center gap-4 shadow-lg">
-        <img src={logo} alt="Logo" className="w-12 h-12 object-contain" />
+      <div className="gradient-primary px-6 py-3 flex items-center gap-4 shadow-lg">
+        <img src={logo} alt="Logo" className="w-8 h-8 object-contain mr-2" />
         <div>
-          <h2 style={{fontFamily: "sans-serif"}} className="text-primary-foreground font-display font-bold text-xl">
+          <h2
+            style={{ fontFamily: "sans-serif", letterSpacing: "0.06em" }}
+            className="text-primary-foreground font-display font-bold text-base"
+          >
             Elecciones 2026
           </h2>
-          <p style={{fontFamily: "sans-serif"}} className="text-primary-foreground/80 text-base">
+          <p
+            style={{ fontFamily: "sans-serif", letterSpacing: "0.06em" }}
+            className="text-primary-foreground/80 text-xs"
+          >
             Cooperativa Comarapa R.L.
           </p>
         </div>
@@ -240,13 +266,20 @@ const VotingProcess = () => {
             <div className="w-20 h-20 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
               <Pause className="w-10 h-10 text-warning" />
             </div>
-            <h2 style={{fontFamily: "sans-serif"}} className="text-3xl font-display font-bold text-foreground">
+            <h2
+              style={{ fontFamily: "sans-serif" }}
+              className="text-3xl font-display font-bold text-foreground"
+            >
               Votación Pausada Temporalmente
             </h2>
-            <p style={{fontFamily: "sans-serif"}} className="text-lg text-muted-foreground leading-relaxed">
-              El proceso de votación ha sido pausado temporalmente. Por favor espere.
+            <p
+              style={{ fontFamily: "sans-serif" }}
+              className="text-lg text-muted-foreground leading-relaxed"
+            >
+              El proceso de votación ha sido pausado temporalmente. Por favor
+              espere.
             </p>
-            <div  className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
               Esperando reanudación...
             </div>
@@ -269,7 +302,8 @@ const VotingProcess = () => {
               Límite de Votantes Alcanzado
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Se ha alcanzado el total de votantes habilitados ({totalEligibleVoters}). Ya no se pueden emitir más votos.
+              Se ha alcanzado el total de votantes habilitados (
+              {totalEligibleVoters}). Ya no se pueden emitir más votos.
             </p>
           </motion.div>
         </div>
@@ -278,32 +312,34 @@ const VotingProcess = () => {
       {!isPaused && !voterLimitReached && (
         <>
           {/* Step indicator */}
-          <div className="flex items-center justify-center gap-1 py-4 px-4">
+          <div className="flex items-center justify-center gap-1 py-2 px-2 mt-1">
             {stepLabels.map((label, i) => (
               <div key={label} className="flex items-center gap-1">
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-base font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-[1px] rounded-full text-base font-semibold transition-all ${
                     i === step
                       ? "bg-primary text-primary-foreground shadow-elevated"
                       : i < step
-                      ? "bg-success text-success-foreground"
-                      : "bg-muted text-muted-foreground"
+                        ? "bg-success text-success-foreground"
+                        : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  <span className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
+                  <span className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-bold">
                     {i < step ? "✓" : i + 1}
                   </span>
-                  <span className="hidden md:inline text-base">{label}</span>
+                  <span className="hidden md:inline text-xs">{label}</span>
                 </div>
                 {i < totalSteps - 1 && (
-                  <div className={`w-4 h-0.5 ${i < step ? "bg-success" : "bg-border"}`} />
+                  <div
+                    className={`w-4 h-0.5 ${i < step ? "bg-success" : "bg-border"}`}
+                  />
                 )}
               </div>
             ))}
           </div>
 
           {/* Voting area */}
-          <div className="flex-1 flex flex-col items-center px-6 pb-6 overflow-auto">
+          <div className="flex-1 flex flex-col items-center px-2 pb-6 overflow-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -313,21 +349,30 @@ const VotingProcess = () => {
                 transition={{ duration: 0.3 }}
                 className="w-full max-w-5xl"
               >
-                <h1 style={{fontFamily: "sans-serif"}} className="text-4xl md:text-5xl font-display font-bold text-center text-foreground mb-2">
-                  Votar por {currentArea}
+                <h1
+                  style={{ fontFamily: "sans-serif" }}
+                  className="text-xl md:text-xl font-display font-bold text-center text-foreground mt-2 mb-3"
+                >
+                  Votar por {currentArea} 
                 </h1>
-                <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-center mb-8 text-xl">
+                {/* <p
+                  style={{ fontFamily: "sans-serif" }}
+                  className="text-muted-foreground text-center mb-8 text-sm"
+                >
                   Seleccione un candidato o elija Voto en Blanco
-                </p>
+                </p> */}
 
                 {areaCandidates.length === 0 ? (
                   <div className="text-center py-12">
-                    <p style={{fontFamily: "sans-serif"}} className="text-muted-foreground text-xl">
+                    <p
+                      style={{ fontFamily: "sans-serif" }}
+                      className="text-muted-foreground text-xl"
+                    >
                       No hay candidatos registrados para esta área
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 gap-y-4 mb-8">
                     {areaCandidates.map((candidate) => (
                       <CandidateCard
                         key={candidate.id}
@@ -356,8 +401,8 @@ const VotingProcess = () => {
               {isSubmitting
                 ? "Enviando..."
                 : step < totalSteps - 1
-                ? "Siguiente →"
-                : "Finalizar Votación ✓"}
+                  ? "Siguiente →"
+                  : "Finalizar Votación ✓"}
             </motion.button>
           </div>
         </>
