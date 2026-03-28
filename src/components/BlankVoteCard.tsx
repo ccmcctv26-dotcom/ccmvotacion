@@ -30,21 +30,21 @@ const BlankVoteCard = ({ isSelected, onSelect }: BlankVoteCardProps) => {
       )}
 
       {/* Icon */}
-      <div className={`w-36 h-36 rounded-full flex items-center justify-center border-4 transition-colors ${
+      <div className={`w-32 h-32 rounded-full flex items-center justify-center border-4 transition-colors ${
         isSelected ? "border-muted-foreground bg-muted" : "border-border bg-muted"
       }`}>
-        <Ban className={`w-16 h-16 ${isSelected ? "text-muted-foreground" : "text-muted-foreground/60"}`} />
+        <Ban className={`w-14 h-14 ${isSelected ? "text-muted-foreground" : "text-muted-foreground/60"}`} />
       </div>
 
       {/* Label */}
-      <h3 style={{fontFamily: "sans-serif"}} className={`font-display font-bold text-2xl ${
+      <h3 style={{fontFamily: "sans-serif", letterSpacing: "0.05em"}} className={`font-display font-bold text-base ${
         isSelected ? "text-foreground" : "text-muted-foreground"
       }`}>
         VOTO EN BLANCO
       </h3>
-      <p style={{fontFamily: "sans-serif"}} className={`font-body text-lg ${isSelected ? "text-muted-foreground" : "text-muted-foreground/70"}`}>
+      {/* <p style={{fontFamily: "sans-serif"}} className={`font-body text-lg ${isSelected ? "text-muted-foreground" : "text-muted-foreground/70"}`}>
         No votar por ningún candidato
-      </p>
+      </p> */}
     </motion.button>
   );
 };
