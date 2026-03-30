@@ -145,10 +145,25 @@ const AdminDashboard = () => {
         .eq("session_id", sessions[0].id);
       if (cands) setCandidates(cands);
 
-      const { data: voteData } = await supabase
-        .from("votes")
-        .select("*")
-        .eq("session_id", sessions[0].id);
+      // Fetch all votes - override default 1000 row limit
+      let allVotes: VoteRecord[] = [];
+      let from = 0;
+      const PAGE_SIZE = 1000;
+      while (true) {
+        const { data: voteData } = await supabase
+          .from("votes")
+          .select("*")
+          .eq("session_id", sessions[0].id)
+          .range(from, from + PAGE_SIZE - 1);
+        if (voteData && voteData.length > 0) {
+          allVotes = allVotes.concat(voteData);
+          if (voteData.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        } else {
+          break;
+        }
+      }
+      const voteData = allVotes;
       if (voteData) setVotes(voteData);
     } else {
       setSession(null);
