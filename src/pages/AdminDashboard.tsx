@@ -385,6 +385,9 @@ const AdminDashboard = () => {
     setFormName(c.full_name);
     setFormArea(c.area);
     setShowForm(true);
+    setTimeout(() => {
+      document.getElementById("candidate-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const resetForm = () => {
