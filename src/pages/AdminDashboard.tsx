@@ -385,6 +385,9 @@ const AdminDashboard = () => {
     setFormName(c.full_name);
     setFormArea(c.area);
     setShowForm(true);
+    setTimeout(() => {
+      document.getElementById("candidate-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const resetForm = () => {
@@ -796,7 +799,7 @@ const AdminDashboard = () => {
                 )}
 
                 {showForm && !isLocked && (
-                  <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
+                  <div id="candidate-form" className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4">
                     <h3 className="font-semibold text-lg text-card-foreground">
                       {editingId ? "Editar Candidato" : "Nuevo Candidato"}
                     </h3>
